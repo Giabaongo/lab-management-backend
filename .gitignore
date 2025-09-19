@@ -1,0 +1,61 @@
+# .NET build outputs
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+.vscode/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Build results
+*.dll
+*.exe
+*.app
+*.log
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Publish outputs
+publish/
+*.pubxml
+*.publishproj
+
+# Resharper files
+*.DotSettings.user
+
+# Rider files
+.idea/
+
+# Others
+*.dbmdl
+*.pdb
+*.cache
+*.config
+*.pidb
+*.svclog
+*.scc
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# MacOS
+.DS_Store
+
+# Linux
+*.swp
