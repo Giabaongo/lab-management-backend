@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LabManagement.API.Models;
+namespace LabManagement.DAL.Models;
 
 public partial class Department
 {

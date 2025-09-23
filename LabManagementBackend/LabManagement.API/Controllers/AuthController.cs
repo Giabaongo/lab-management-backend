@@ -1,6 +1,5 @@
-﻿using LabManagement.API.DTOs;
-using LabManagement.API.Services;
-using Microsoft.AspNetCore.Http;
+﻿using LabManagement.BLL.DTOs;
+using LabManagement.BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers

@@ -1,4 +1,4 @@
-﻿namespace LabManagement.API.DTOs
+﻿namespace LabManagement.BLL.DTOs
 {
     public class AuthResponseDTO
     {

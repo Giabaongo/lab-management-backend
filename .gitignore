@@ -59,3 +59,8 @@ $RECYCLE.BIN/
 
 # Linux
 *.swp
+
+# Configuration files with sensitive data
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json

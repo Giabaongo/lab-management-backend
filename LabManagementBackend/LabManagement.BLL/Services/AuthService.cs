@@ -1,13 +1,15 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using LabManagement.API.DTOs;
-using LabManagement.API.Repos;
+using LabManagement.BLL.DTOs;
+using LabManagement.DAL.Repos;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace LabManagement.API.Services
+namespace LabManagement.BLL.Services
 {
     public class AuthService : IAuthService
+
     {
         private readonly IConfiguration _config;
         private readonly UserRepo _userRepo;
@@ -19,18 +21,18 @@ namespace LabManagement.API.Services
         }
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            var user = _userRepo.Auth(loginDto.Username, loginDto.Password);
+            var user = await _userRepo.Auth(loginDto.Email, loginDto.Password);
             if (user == null)
-                return null;
+                return null!;
 
             // Create token
             var claims = new[]
             {
-                new Claim("id", "123"),
-                new Claim(ClaimTypes.Name, "testuser")
+                new Claim("id", user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Name)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? ""));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

@@ -1,6 +1,6 @@
-﻿using LabManagement.API.DTOs;
+﻿using LabManagement.BLL.DTOs;
 
-namespace LabManagement.API.Services
+namespace LabManagement.BLL.Services
 {
     public interface IAuthService
     {

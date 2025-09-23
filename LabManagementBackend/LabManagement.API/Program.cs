@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using LabManagement.API.Services;
+using LabManagement.BLL.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
