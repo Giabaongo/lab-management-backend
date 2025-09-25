@@ -12,7 +12,7 @@ namespace LabManagement.API
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<IAuthService, AuthService>();
-
+           
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {
