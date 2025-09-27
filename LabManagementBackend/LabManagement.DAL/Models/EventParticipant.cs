@@ -9,7 +9,7 @@ public partial class EventParticipant
 
     public int UserId { get; set; }
 
-    public string Role { get; set; } = null!;
+    public decimal Role { get; set; }
 
     public virtual LabEvent Event { get; set; } = null!;
 
