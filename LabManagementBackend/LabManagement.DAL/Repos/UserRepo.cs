@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabManagement.DAL.Repos
 {
-    public class UserRepo
+    public class UserRepo : IUserRepo
     {
         private readonly LabManagementDbContext _context;
         public UserRepo()
