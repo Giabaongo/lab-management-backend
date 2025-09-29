@@ -7,6 +7,7 @@ COPY LabManagementBackend/*.sln ./
 COPY LabManagementBackend/LabManagement.API/*.csproj ./LabManagement.API/
 COPY LabManagementBackend/LabManagement.BLL/*.csproj ./LabManagement.BLL/
 COPY LabManagementBackend/LabManagement.DAL/*.csproj ./LabManagement.DAL/
+COPY LabManagementBackend/LabManagement.Common/*.csproj ./LabManagement.Common/
 
 # Restore dependencies
 RUN dotnet restore
