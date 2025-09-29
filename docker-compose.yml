@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  # API Application - Kết nối đến Azure SQL Database
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lab-management-api
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Sử dụng Azure SQL Database hiện tại của bạn
+      - ConnectionStrings__DefaultConnection=server=bao-sql-server.database.windows.net; database=LabManagementDB; uid=giabaongo; pwd=abcd1234@; TrustServerCertificate=False; Trusted_Connection=False;

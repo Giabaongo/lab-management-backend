@@ -1,0 +1,16 @@
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Ignore files for Docker build context
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/node_modules/
+**/.git/
+**/.gitignore
+**/README*.md
+**/.env
+**/docker-compose.override.yml
