@@ -12,7 +12,8 @@ namespace LabManagement.API
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<IAuthService, AuthService>();
-
+            builder.Services.AddScoped<IUserService, UserService>();
+           
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {
@@ -84,11 +85,15 @@ namespace LabManagement.API
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            // if (app.Environment.IsDevelopment())
+            // {
+            //     app.UseSwagger();
+            //     app.UseSwaggerUI();
+            // }
+
+            // Enable Swagger for all environments (including Production)
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 
