@@ -9,15 +9,11 @@ public partial class Lab
 
     public string Name { get; set; } = null!;
 
-    public int DepartmentId { get; set; }
-
     public int ManagerId { get; set; }
 
     public string? Location { get; set; }
 
     public string? Description { get; set; }
-
-    public virtual Department Department { get; set; } = null!;
 
     public virtual ICollection<LabEvent> LabEvents { get; set; } = new List<LabEvent>();
 

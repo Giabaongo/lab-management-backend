@@ -16,8 +16,6 @@ public partial class LabManagementDbContext : DbContext
 
     public virtual DbSet<ActivityType> ActivityTypes { get; set; }
 
-    public virtual DbSet<Department> Departments { get; set; }
-
     public virtual DbSet<EventParticipant> EventParticipants { get; set; }
 
     public virtual DbSet<Lab> Labs { get; set; }
@@ -53,7 +51,7 @@ public partial class LabManagementDbContext : DbContext
     {
         modelBuilder.Entity<ActivityType>(entity =>
         {
-            entity.HasKey(e => e.ActivityTypeId).HasName("PK__activity__D2470C87450D1758");
+            entity.HasKey(e => e.ActivityTypeId).HasName("PK__activity__D2470C87E6BFD9E2");
 
             entity.ToTable("activity_types");
 
@@ -67,54 +65,36 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnName("name");
         });
 
-        modelBuilder.Entity<Department>(entity =>
-        {
-            entity.HasKey(e => e.DepartmentId).HasName("PK__departme__C223242226FD0D59");
-
-            entity.ToTable("departments");
-
-            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.Name)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("name");
-        });
-
         modelBuilder.Entity<EventParticipant>(entity =>
         {
-            entity.HasKey(e => new { e.EventId, e.UserId }).HasName("PK__event_pa__C8EB14572030C1E5");
+            entity.HasKey(e => new { e.EventId, e.UserId }).HasName("PK__event_pa__C8EB1457151547CC");
 
             entity.ToTable("event_participants");
 
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Role)
-                .HasMaxLength(20)
-                .IsUnicode(false)
+                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("role");
 
             entity.HasOne(d => d.Event).WithMany(p => p.EventParticipants)
                 .HasForeignKey(d => d.EventId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__event_par__event__4D94879B");
+                .HasConstraintName("FK__event_par__event__151B244E");
 
             entity.HasOne(d => d.User).WithMany(p => p.EventParticipants)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__event_par__user___4E88ABD4");
+                .HasConstraintName("FK__event_par__user___160F4887");
         });
 
         modelBuilder.Entity<Lab>(entity =>
         {
-            entity.HasKey(e => e.LabId).HasName("PK__labs__66DE64DB348D68A0");
+            entity.HasKey(e => e.LabId).HasName("PK__labs__66DE64DB63EAC51C");
 
             entity.ToTable("labs");
 
             entity.Property(e => e.LabId).HasColumnName("lab_id");
-            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
             entity.Property(e => e.Description)
                 .HasColumnType("text")
                 .HasColumnName("description");
@@ -128,20 +108,15 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("name");
 
-            entity.HasOne(d => d.Department).WithMany(p => p.Labs)
-                .HasForeignKey(d => d.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__labs__department__3E52440B");
-
             entity.HasOne(d => d.Manager).WithMany(p => p.Labs)
                 .HasForeignKey(d => d.ManagerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__labs__manager_id__3F466844");
+                .HasConstraintName("FK__labs__manager_id__06CD04F7");
         });
 
         modelBuilder.Entity<LabEvent>(entity =>
         {
-            entity.HasKey(e => e.EventId).HasName("PK__lab_even__2370F727FFDCB3A2");
+            entity.HasKey(e => e.EventId).HasName("PK__lab_even__2370F7270A85F029");
 
             entity.ToTable("lab_events");
 
@@ -175,27 +150,27 @@ public partial class LabManagementDbContext : DbContext
             entity.HasOne(d => d.ActivityType).WithMany(p => p.LabEvents)
                 .HasForeignKey(d => d.ActivityTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__lab_event__activ__49C3F6B7");
+                .HasConstraintName("FK__lab_event__activ__114A936A");
 
             entity.HasOne(d => d.Lab).WithMany(p => p.LabEvents)
                 .HasForeignKey(d => d.LabId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__lab_event__lab_i__47DBAE45");
+                .HasConstraintName("FK__lab_event__lab_i__0F624AF8");
 
             entity.HasOne(d => d.Organizer).WithMany(p => p.LabEvents)
                 .HasForeignKey(d => d.OrganizerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__lab_event__organ__4AB81AF0");
+                .HasConstraintName("FK__lab_event__organ__123EB7A3");
 
             entity.HasOne(d => d.Zone).WithMany(p => p.LabEvents)
                 .HasForeignKey(d => d.ZoneId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__lab_event__zone___48CFD27E");
+                .HasConstraintName("FK__lab_event__zone___10566F31");
         });
 
         modelBuilder.Entity<LabZone>(entity =>
         {
-            entity.HasKey(e => e.ZoneId).HasName("PK__lab_zone__80B401DFC554C85A");
+            entity.HasKey(e => e.ZoneId).HasName("PK__lab_zone__80B401DF8DC1AAD7");
 
             entity.ToTable("lab_zones");
 
@@ -212,12 +187,12 @@ public partial class LabManagementDbContext : DbContext
             entity.HasOne(d => d.Lab).WithMany(p => p.LabZones)
                 .HasForeignKey(d => d.LabId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__lab_zones__lab_i__4222D4EF");
+                .HasConstraintName("FK__lab_zones__lab_i__09A971A2");
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__notifica__E059842FC3175EFE");
+            entity.HasKey(e => e.NotificationId).HasName("PK__notifica__E059842F54DF105B");
 
             entity.ToTable("notifications");
 
@@ -236,17 +211,17 @@ public partial class LabManagementDbContext : DbContext
             entity.HasOne(d => d.Event).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.EventId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__notificat__event__59063A47");
+                .HasConstraintName("FK__notificat__event__208CD6FA");
 
             entity.HasOne(d => d.Recipient).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.RecipientId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__notificat__recip__5812160E");
+                .HasConstraintName("FK__notificat__recip__1F98B2C1");
         });
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__reports__779B7C587B55F42C");
+            entity.HasKey(e => e.ReportId).HasName("PK__reports__779B7C58021353BD");
 
             entity.ToTable("reports");
 
@@ -269,20 +244,20 @@ public partial class LabManagementDbContext : DbContext
             entity.HasOne(d => d.GeneratedByNavigation).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.GeneratedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__reports__generat__5CD6CB2B");
+                .HasConstraintName("FK__reports__generat__245D67DE");
 
             entity.HasOne(d => d.Lab).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.LabId)
-                .HasConstraintName("FK__reports__lab_id__5DCAEF64");
+                .HasConstraintName("FK__reports__lab_id__25518C17");
 
             entity.HasOne(d => d.Zone).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.ZoneId)
-                .HasConstraintName("FK__reports__zone_id__5EBF139D");
+                .HasConstraintName("FK__reports__zone_id__2645B050");
         });
 
         modelBuilder.Entity<SecurityLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK__security__9E2397E0D77F092D");
+            entity.HasKey(e => e.LogId).HasName("PK__security__9E2397E0DFE7202D");
 
             entity.ToTable("security_logs");
 
@@ -308,28 +283,27 @@ public partial class LabManagementDbContext : DbContext
             entity.HasOne(d => d.Event).WithMany(p => p.SecurityLogs)
                 .HasForeignKey(d => d.EventId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__security___event__52593CB8");
+                .HasConstraintName("FK__security___event__19DFD96B");
 
             entity.HasOne(d => d.Security).WithMany(p => p.SecurityLogs)
                 .HasForeignKey(d => d.SecurityId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__security___secur__534D60F1");
+                .HasConstraintName("FK__security___secur__1AD3FDA4");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__users__B9BE370FDD573D70");
+            entity.HasKey(e => e.UserId).HasName("PK__users__B9BE370F20E930E3");
 
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E61642BBB0620").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E6164DB54CFBB").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
-            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .IsUnicode(false)
@@ -343,14 +317,8 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("password_hash");
             entity.Property(e => e.Role)
-                .HasMaxLength(20)
-                .IsUnicode(false)
+                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("role");
-
-            entity.HasOne(d => d.Department).WithMany(p => p.Users)
-                .HasForeignKey(d => d.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__users__departmen__3B75D760");
         });
 
         OnModelCreatingPartial(modelBuilder);
