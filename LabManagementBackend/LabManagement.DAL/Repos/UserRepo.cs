@@ -18,12 +18,12 @@ namespace LabManagement.DAL.Repos
 
         public async Task<User?> GetByIdAsync(int userId)
         {
-            return await _context.Users.Include(u => u.Department).FirstOrDefaultAsync(u => u.UserId == userId);
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         }
 
         public async Task<List<User>> GetAllAsync()
         {
-            return await _context.Users.Include(u => u.Department).ToListAsync();
+            return await _context.Users.ToListAsync();
         }
 
         public async Task AddASync(User user)
