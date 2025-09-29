@@ -13,13 +13,9 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public string Role { get; set; } = null!;
-
-    public int DepartmentId { get; set; }
+    public decimal Role { get; set; }
 
     public DateTime CreatedAt { get; set; }
-
-    public virtual Department Department { get; set; } = null!;
 
     public virtual ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();
 
