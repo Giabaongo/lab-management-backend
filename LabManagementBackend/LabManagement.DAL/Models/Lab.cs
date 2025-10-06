@@ -15,6 +15,10 @@ public partial class Lab
 
     public string? Description { get; set; }
 
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
+
     public virtual ICollection<LabEvent> LabEvents { get; set; } = new List<LabEvent>();
 
     public virtual ICollection<LabZone> LabZones { get; set; } = new List<LabZone>();

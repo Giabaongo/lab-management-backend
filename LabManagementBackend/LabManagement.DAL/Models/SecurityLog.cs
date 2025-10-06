@@ -11,7 +11,7 @@ public partial class SecurityLog
 
     public int SecurityId { get; set; }
 
-    public string Action { get; set; } = null!;
+    public decimal Action { get; set; }
 
     public DateTime Timestamp { get; set; }
 

@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LabManagement.BLL\LabManagement.BLL.csproj" />
+    <ProjectReference Include="..\LabManagement.Common\LabManagement.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

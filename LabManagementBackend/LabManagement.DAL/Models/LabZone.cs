@@ -13,6 +13,8 @@ public partial class LabZone
 
     public string? Description { get; set; }
 
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     public virtual Lab Lab { get; set; } = null!;
 
     public virtual ICollection<LabEvent> LabEvents { get; set; } = new List<LabEvent>();
