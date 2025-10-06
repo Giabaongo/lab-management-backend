@@ -7,10 +7,12 @@ namespace LabManagement.BLL.Services
     public class UserService : IUserService
     {
         private readonly UserRepo _userRepo;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public UserService()
+        public UserService(IPasswordHasher passwordHasher)
         {
             _userRepo = new UserRepo();
+            _passwordHasher = passwordHasher;
         }
 
         public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
@@ -59,11 +61,14 @@ namespace LabManagement.BLL.Services
 
         public async Task<UserDTO> CreateUserAsync(CreateUserDTO createUserDto)
         {
+            // Hash the password before storing
+            var passwordHash = _passwordHasher.HashPassword(createUserDto.Password);
+
             var user = new User
             {
                 Name = createUserDto.Name,
                 Email = createUserDto.Email,
-                PasswordHash = createUserDto.Password, // Store password as plain text for now
+                PasswordHash = passwordHash, // Store hashed password
                 Role = createUserDto.Role,
                 CreatedAt = DateTime.UtcNow
             };
@@ -91,8 +96,9 @@ namespace LabManagement.BLL.Services
             if (!string.IsNullOrEmpty(updateUserDto.Email))
                 user.Email = updateUserDto.Email;
 
+            // Hash the password if it's being updated
             if (!string.IsNullOrEmpty(updateUserDto.Password))
-                user.PasswordHash = updateUserDto.Password; // Store password as plain text for now
+                user.PasswordHash = _passwordHasher.HashPassword(updateUserDto.Password);
 
             if (updateUserDto.Role.HasValue)
                 user.Role = updateUserDto.Role.Value;

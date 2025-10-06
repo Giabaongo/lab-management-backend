@@ -13,24 +13,36 @@ namespace LabManagement.BLL.Services
     {
         private readonly IConfiguration _config;
         private readonly UserRepo _userRepo;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public AuthService(IConfiguration config)
+        public AuthService(IConfiguration config, IPasswordHasher passwordHasher)
         {
             _config = config;
             _userRepo = new UserRepo();
+            _passwordHasher = passwordHasher;
         }
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            var user = await _userRepo.Auth(loginDto.Email, loginDto.Password);
+            // Get user by email first
+            var users = await _userRepo.GetAllAsync();
+            var user = users.FirstOrDefault(u => u.Email == loginDto.Email);
+            
             if (user == null)
                 return null!;
 
-            // Create token
+            // Verify password using BCrypt
+            if (!_passwordHasher.VerifyPassword(loginDto.Password, user.PasswordHash))
+                return null!;
+
+            // Create token with enhanced claims
             var claims = new[]
             {
-                new Claim("id", user.UserId.ToString()),
+                new Claim("UserId", user.UserId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("Role", user.Role.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? ""));

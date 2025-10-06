@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace LabManagement.DAL.Models;
 
@@ -68,6 +67,15 @@ public partial class LabManagementDbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("name");
+
+            // Seed data for ActivityTypes
+            entity.HasData(
+                new ActivityType { ActivityTypeId = 1, Name = "Workshop", Description = "Hands-on training session" },
+                new ActivityType { ActivityTypeId = 2, Name = "Seminar", Description = "Educational seminar or lecture" },
+                new ActivityType { ActivityTypeId = 3, Name = "Research", Description = "Research activity" },
+                new ActivityType { ActivityTypeId = 4, Name = "Experiment", Description = "Laboratory experiment" },
+                new ActivityType { ActivityTypeId = 5, Name = "Meeting", Description = "Group meeting or discussion" }
+            );
         });
 
         modelBuilder.Entity<Booking>(entity =>
@@ -142,6 +150,14 @@ public partial class LabManagementDbContext : DbContext
                 .HasForeignKey(d => d.LabId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__equipment__lab_i__7849DB76");
+
+            // Seed data for Equipment
+            entity.HasData(
+                new Equipment { EquipmentId = 1, LabId = 1, Name = "Microscope", Code = "EQ-001", Description = "Digital microscope with 1000x magnification", Status = 1 },
+                new Equipment { EquipmentId = 2, LabId = 1, Name = "Centrifuge", Code = "EQ-002", Description = "High-speed centrifuge", Status = 1 },
+                new Equipment { EquipmentId = 3, LabId = 2, Name = "Computer Station", Code = "EQ-003", Description = "Workstation with development tools", Status = 1 },
+                new Equipment { EquipmentId = 4, LabId = 2, Name = "Server Rack", Code = "EQ-004", Description = "Network server infrastructure", Status = 1 }
+            );
         });
 
         modelBuilder.Entity<EventParticipant>(entity =>
@@ -191,6 +207,13 @@ public partial class LabManagementDbContext : DbContext
                 .HasForeignKey(d => d.ManagerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__labs__manager_id__6FB49575");
+
+            // Seed data for Labs
+            entity.HasData(
+                new Lab { LabId = 1, Name = "Biology Lab", ManagerId = 2, Location = "Building A - Floor 2", Description = "Laboratory for biology experiments and research" },
+                new Lab { LabId = 2, Name = "Computer Lab", ManagerId = 2, Location = "Building B - Floor 3", Description = "Computer lab with 30 workstations" },
+                new Lab { LabId = 3, Name = "Chemistry Lab", ManagerId = 3, Location = "Building A - Floor 1", Description = "Chemistry laboratory with safety equipment" }
+            );
         });
 
         modelBuilder.Entity<LabEvent>(entity =>
@@ -266,6 +289,15 @@ public partial class LabManagementDbContext : DbContext
                 .HasForeignKey(d => d.LabId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__lab_zones__lab_i__72910220");
+
+            // Seed data for LabZones
+            entity.HasData(
+                new LabZone { ZoneId = 1, LabId = 1, Name = "Zone A", Description = "Main experiment area" },
+                new LabZone { ZoneId = 2, LabId = 1, Name = "Zone B", Description = "Storage and preparation area" },
+                new LabZone { ZoneId = 3, LabId = 2, Name = "Zone A", Description = "Development stations" },
+                new LabZone { ZoneId = 4, LabId = 2, Name = "Zone B", Description = "Server room" },
+                new LabZone { ZoneId = 5, LabId = 3, Name = "Zone A", Description = "Chemical storage" }
+            );
         });
 
         modelBuilder.Entity<Notification>(entity =>
@@ -396,6 +428,16 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.Role)
                 .HasColumnType("decimal(2, 0)")
                 .HasColumnName("role");
+
+            // Seed data for Users
+            // Note: In production, use proper password hashing (e.g., BCrypt)
+            entity.HasData(
+                new User { UserId = 1, Name = "Admin User", Email = "admin@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 1, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 2, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 3, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 4, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 5, Name = "Student User", Email = "student@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 5, CreatedAt = new DateTime(2025, 1, 1) }
+            );
         });
 
         OnModelCreatingPartial(modelBuilder);
