@@ -86,6 +86,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <param name="createUserDto">User creation data</param>
         /// <returns>Created user</returns>
+        [AllowAnonymous]
         [HttpPost]
         public async Task<ActionResult<UserDTO>> CreateUser([FromBody] CreateUserDTO createUserDto)
         {
