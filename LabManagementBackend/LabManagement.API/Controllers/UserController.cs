@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Mvc;
-using LabManagement.BLL.Services;
 using LabManagement.BLL.DTOs;
+using LabManagement.BLL.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

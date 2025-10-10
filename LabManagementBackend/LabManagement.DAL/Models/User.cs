@@ -17,6 +17,8 @@ public partial class User
 
     public DateTime CreatedAt { get; set; }
 
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     public virtual ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();
 
     public virtual ICollection<LabEvent> LabEvents { get; set; } = new List<LabEvent>();
