@@ -1,24 +1,24 @@
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
-using LabManagement.DAL.Repos;
 
-namespace LabManagement.BLL.Services
+namespace LabManagement.BLL.Implementations
 {
     public class UserService : IUserService
     {
-        private readonly UserRepo _userRepo;
+        private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
 
-        public UserService(IPasswordHasher passwordHasher)
+        public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
         {
-            _userRepo = new UserRepo();
+            _userRepository = userRepository;
             _passwordHasher = passwordHasher;
         }
 
         public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
         {
-            var users = await _userRepo.GetAllAsync();
+            var users = await _userRepository.GetAllAsync();
             return users.Select(u => new UserDTO
             {
                 UserId = u.UserId,
@@ -31,7 +31,7 @@ namespace LabManagement.BLL.Services
 
         public async Task<UserDTO?> GetUserByIdAsync(int id)
         {
-            var user = await _userRepo.GetByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
             if (user == null) return null;
 
             return new UserDTO
@@ -46,8 +46,7 @@ namespace LabManagement.BLL.Services
 
         public async Task<UserDTO?> GetUserByEmailAsync(string email)
         {
-            var users = await _userRepo.GetAllAsync();
-            var user = users.FirstOrDefault(u => u.Email == email);
+            var user = await _userRepository.GetByEmailAsync(email);
             if (user == null) return null;
 
             return new UserDTO
@@ -74,7 +73,7 @@ namespace LabManagement.BLL.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _userRepo.AddASync(user);
+            await _userRepository.AddAsync(user);
 
             return new UserDTO
             {
@@ -88,7 +87,7 @@ namespace LabManagement.BLL.Services
 
         public async Task<UserDTO?> UpdateUserAsync(int id, UpdateUserDTO updateUserDto)
         {
-            var user = await _userRepo.GetByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
             if (user == null) return null;
 
             if (!string.IsNullOrEmpty(updateUserDto.Name))
@@ -104,7 +103,7 @@ namespace LabManagement.BLL.Services
             if (updateUserDto.Role.HasValue)
                 user.Role = updateUserDto.Role.Value;
 
-            await _userRepo.UpdateAsync(user);
+            await _userRepository.UpdateAsync(user);
 
             return new UserDTO
             {
@@ -118,23 +117,21 @@ namespace LabManagement.BLL.Services
 
         public async Task<bool> DeleteUserAsync(int id)
         {
-            var user = await _userRepo.GetByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
             if (user == null) return false;
 
-            await _userRepo.DeleteAsync(id);
+            await _userRepository.DeleteAsync(user);
             return true;
         }
 
         public async Task<bool> UserExistsAsync(int id)
         {
-            var user = await _userRepo.GetByIdAsync(id);
-            return user != null;
+            return await _userRepository.ExistsAsync(u => u.UserId == id);
         }
 
         public async Task<bool> EmailExistsAsync(string email)
         {
-            var users = await _userRepo.GetAllAsync();
-            return users.Any(u => u.Email == email);
+            return await _userRepository.EmailExistsAsync(email);
         }
     }
 }

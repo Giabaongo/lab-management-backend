@@ -1,5 +1,5 @@
 ﻿using LabManagement.BLL.DTOs;
-using LabManagement.BLL.Services;
+using LabManagement.BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
