@@ -2,37 +2,45 @@
 using System.Security.Claims;
 using System.Text;
 using LabManagement.BLL.DTOs;
-using LabManagement.DAL.Repos;
+using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Exceptions;
+using LabManagement.DAL.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace LabManagement.BLL.Services
+namespace LabManagement.BLL.Implementations
 {
     public class AuthService : IAuthService
 
     {
         private readonly IConfiguration _config;
-        private readonly UserRepo _userRepo;
+        private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
 
-        public AuthService(IConfiguration config, IPasswordHasher passwordHasher)
+        public AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher passwordHasher)
         {
             _config = config;
-            _userRepo = new UserRepo();
+            _userRepository = userRepository;
             _passwordHasher = passwordHasher;
         }
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            // Get user by email first
-            var users = await _userRepo.GetAllAsync();
-            var user = users.FirstOrDefault(u => u.Email == loginDto.Email);
+            // Validate input
+            if (string.IsNullOrEmpty(loginDto.Email))
+                throw new BadRequestException("Email is required");
+            
+            if (string.IsNullOrEmpty(loginDto.Password))
+                throw new BadRequestException("Password is required");
+
+            // Get user by email
+            var user = await _userRepository.GetByEmailAsync(loginDto.Email);
             
             if (user == null)
-                return null!;
+                throw new UnauthorizedException("Invalid email or password");
 
             // Verify password using BCrypt
             if (!_passwordHasher.VerifyPassword(loginDto.Password, user.PasswordHash))
-                return null!;
+                throw new UnauthorizedException("Invalid email or password");
 
             // Create token with enhanced claims
             var claims = new[]

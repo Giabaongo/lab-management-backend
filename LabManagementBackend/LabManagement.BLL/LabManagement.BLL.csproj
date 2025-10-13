@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\LabManagement.Common\LabManagement.Common.csproj" />
     <ProjectReference Include="..\LabManagement.DAL\LabManagement.DAL.csproj" />
   </ItemGroup>
 

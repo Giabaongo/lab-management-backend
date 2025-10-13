@@ -436,7 +436,7 @@ public partial class LabManagementDbContext : DbContext
                 new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 2, CreatedAt = new DateTime(2025, 1, 1) },
                 new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 3, CreatedAt = new DateTime(2025, 1, 1) },
                 new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 4, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 5, Name = "Student User", Email = "student@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 5, CreatedAt = new DateTime(2025, 1, 1) }
+                new User { UserId = 5, Name = "Member", Email = "member@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 5, CreatedAt = new DateTime(2025, 1, 1) }
             );
         });
 

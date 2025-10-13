@@ -1,4 +1,4 @@
-namespace LabManagement.BLL.Services
+namespace LabManagement.BLL.Interfaces
 {
     public interface IPasswordHasher
     {
