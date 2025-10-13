@@ -1,5 +1,6 @@
 ﻿using LabManagement.BLL.Interfaces;
-using LabManagement.DAL.Repos;
+using LabManagement.Common.Constants;
+using LabManagement.DAL.Interfaces;
 using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
@@ -11,20 +12,24 @@ namespace LabManagement.BLL.Services
 {
     public class AdminService : IAdminService
     {
-        private readonly UserRepo _userRepo;
-        public AdminService(UserRepo userRepo)
+        private readonly IUserRepository _IUserRepo;
+        public AdminService(IUserRepository userRepository)
         {
-            _userRepo = userRepo;
+            _IUserRepo = userRepository;
         }
-        public async Task<bool> UpdateUserRoleAsync(int userId, string newRole)
+
+        public async Task<bool> UpdateUserRoleAsync(int userId, Constant.UserRole newRole)
         {
-            var getUser = await _userRepo.GetByIdAsync(userId);
-            if (getUser != null)
+            var getUser = await _IUserRepo.GetByIdAsync(userId);
+            if (getUser == null)
             {
-                getUser.Role = 
-                return await Task.FromResult(true);
+                return false;
             }
-            return await Task.FromResult(false);
+
+            getUser.Role = (decimal)newRole;
+            await _IUserRepo.UpdateAsync(getUser);
+
+            return true;
         }
     }
 }
