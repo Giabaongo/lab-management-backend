@@ -1,11 +1,16 @@
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Exceptions;
+using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
 {
+    /// <summary>
+    /// User management endpoints
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Admin")]
@@ -19,21 +24,15 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
-        /// Get all users
+        /// Get all users (Admin and SchoolManager only)
         /// </summary>
         /// <returns>List of users</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers()
+        [Authorize(Roles = "3,4")] // SchoolManager = 3, Admin = 4
+        public async Task<ActionResult<ApiResponse<IEnumerable<UserDTO>>>> GetAllUsers()
         {
-            try
-            {
-                var users = await _userService.GetAllUsersAsync();
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            var users = await _userService.GetAllUsersAsync();
+            return Ok(ApiResponse<IEnumerable<UserDTO>>.SuccessResponse(users, "Users retrieved successfully"));
         }
 
         /// <summary>
@@ -42,21 +41,15 @@ namespace LabManagement.API.Controllers
         /// <param name="id">User ID</param>
         /// <returns>User details</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserDTO>> GetUserById(int id)
+        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        public async Task<ActionResult<ApiResponse<UserDTO>>> GetUserById(int id)
         {
-            try
-            {
-                var user = await _userService.GetUserByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new { message = "User not found" });
-                }
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            var user = await _userService.GetUserByIdAsync(id);
+            
+            if (user == null)
+                throw new NotFoundException("User", id);
+
+            return Ok(ApiResponse<UserDTO>.SuccessResponse(user, "User retrieved successfully"));
         }
 
         /// <summary>
@@ -65,117 +58,97 @@ namespace LabManagement.API.Controllers
         /// <param name="email">User email</param>
         /// <returns>User details</returns>
         [HttpGet("email/{email}")]
-        public async Task<ActionResult<UserDTO>> GetUserByEmail(string email)
+        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        public async Task<ActionResult<ApiResponse<UserDTO>>> GetUserByEmail(string email)
         {
-            try
-            {
-                var user = await _userService.GetUserByEmailAsync(email);
-                if (user == null)
-                {
-                    return NotFound(new { message = "User not found" });
-                }
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            if (string.IsNullOrWhiteSpace(email))
+                throw new BadRequestException("Email cannot be empty");
+
+            var user = await _userService.GetUserByEmailAsync(email);
+            
+            if (user == null)
+                throw new NotFoundException($"User with email '{email}' was not found");
+
+            return Ok(ApiResponse<UserDTO>.SuccessResponse(user, "User retrieved successfully"));
         }
 
         /// <summary>
-        /// Create a new user
+        /// Create a new user (Admin only)
         /// </summary>
         /// <param name="createUserDto">User creation data</param>
         /// <returns>Created user</returns>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> CreateUser([FromBody] CreateUserDTO createUserDto)
+        [Authorize(Roles = "4")] // Admin only
+        public async Task<ActionResult<ApiResponse<UserDTO>>> CreateUser([FromBody] CreateUserDTO createUserDto)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+            if (!ModelState.IsValid)
+                throw new BadRequestException("Invalid user data");
 
-                // Check if email already exists
-                if (await _userService.EmailExistsAsync(createUserDto.Email))
-                {
-                    return Conflict(new { message = "Email already exists" });
-                }
+            // Check if email already exists
+            if (await _userService.EmailExistsAsync(createUserDto.Email))
+                throw new BadRequestException($"Email '{createUserDto.Email}' already exists");
 
-                var user = await _userService.CreateUserAsync(createUserDto);
-                return CreatedAtAction(nameof(GetUserById), new { id = user.UserId }, user);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            var user = await _userService.CreateUserAsync(createUserDto);
+            
+            return CreatedAtAction(
+                nameof(GetUserById), 
+                new { id = user.UserId }, 
+                ApiResponse<UserDTO>.SuccessResponse(user, "User created successfully")
+            );
         }
 
         /// <summary>
-        /// Update user by ID
+        /// Update user by ID (Admin and SchoolManager only)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <param name="updateUserDto">User update data</param>
         /// <returns>Updated user</returns>
         [HttpPut("{id}")]
-        public async Task<ActionResult<UserDTO>> UpdateUser(int id, [FromBody] UpdateUserDTO updateUserDto)
+        [Authorize(Roles = "3,4")] // SchoolManager = 3, Admin = 4
+        public async Task<ActionResult<ApiResponse<UserDTO>>> UpdateUser(int id, [FromBody] UpdateUserDTO updateUserDto)
         {
-            try
+            if (!ModelState.IsValid)
+                throw new BadRequestException("Invalid user data");
+
+            // Check if user exists
+            if (!await _userService.UserExistsAsync(id))
+                throw new NotFoundException("User", id);
+
+            // Check if email already exists (if updating email)
+            if (!string.IsNullOrEmpty(updateUserDto.Email))
             {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                // Check if user exists
-                if (!await _userService.UserExistsAsync(id))
-                {
-                    return NotFound(new { message = "User not found" });
-                }
-
-                // Check if email already exists (if updating email)
-                if (!string.IsNullOrEmpty(updateUserDto.Email))
-                {
-                    var existingUser = await _userService.GetUserByEmailAsync(updateUserDto.Email);
-                    if (existingUser != null && existingUser.UserId != id)
-                    {
-                        return Conflict(new { message = "Email already exists" });
-                    }
-                }
-
-                var user = await _userService.UpdateUserAsync(id, updateUserDto);
-                return Ok(user);
+                var existingUser = await _userService.GetUserByEmailAsync(updateUserDto.Email);
+                if (existingUser != null && existingUser.UserId != id)
+                    throw new BadRequestException($"Email '{updateUserDto.Email}' already exists");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+
+            var user = await _userService.UpdateUserAsync(id, updateUserDto);
+            
+            if (user == null)
+                throw new NotFoundException("User", id);
+
+            return Ok(ApiResponse<UserDTO>.SuccessResponse(user, "User updated successfully"));
         }
 
         /// <summary>
-        /// Delete user by ID
+        /// Delete user by ID (Admin only)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <returns>Success message</returns>
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteUser(int id)
+        [Authorize(Roles = "4")] // Admin only
+        public async Task<ActionResult<ApiResponse<object>>> DeleteUser(int id)
         {
-            try
-            {
-                var result = await _userService.DeleteUserAsync(id);
-                if (!result)
-                {
-                    return NotFound(new { message = "User not found" });
-                }
+            var result = await _userService.DeleteUserAsync(id);
+            
+            if (!result)
+                throw new NotFoundException("User", id);
 
-                return Ok(new { message = "User deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { deletedUserId = id }, 
+                "User deleted successfully"
+            ));
         }
 
         /// <summary>
@@ -184,17 +157,14 @@ namespace LabManagement.API.Controllers
         /// <param name="id">User ID</param>
         /// <returns>Boolean result</returns>
         [HttpGet("{id}/exists")]
-        public async Task<ActionResult<bool>> UserExists(int id)
+        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        public async Task<ActionResult<ApiResponse<object>>> UserExists(int id)
         {
-            try
-            {
-                var exists = await _userService.UserExistsAsync(id);
-                return Ok(new { exists });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            var exists = await _userService.UserExistsAsync(id);
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { userId = id, exists }, 
+                exists ? "User exists" : "User does not exist"
+            ));
         }
 
         /// <summary>
@@ -203,17 +173,17 @@ namespace LabManagement.API.Controllers
         /// <param name="email">Email address</param>
         /// <returns>Boolean result</returns>
         [HttpGet("email/{email}/exists")]
-        public async Task<ActionResult<bool>> EmailExists(string email)
+        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        public async Task<ActionResult<ApiResponse<object>>> EmailExists(string email)
         {
-            try
-            {
-                var exists = await _userService.EmailExistsAsync(email);
-                return Ok(new { exists });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            if (string.IsNullOrWhiteSpace(email))
+                throw new BadRequestException("Email cannot be empty");
+
+            var exists = await _userService.EmailExistsAsync(email);
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { email, exists }, 
+                exists ? "Email exists" : "Email does not exist"
+            ));
         }
     }
 }
