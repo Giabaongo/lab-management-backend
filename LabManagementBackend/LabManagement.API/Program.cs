@@ -1,5 +1,8 @@
 ﻿using System.Text;
-using LabManagement.BLL.Services;
+using LabManagement.BLL.Interfaces;
+using LabManagement.BLL.Implementations;
+using LabManagement.DAL.Interfaces;
+using LabManagement.DAL.Implementations;
 using LabManagement.DAL.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +20,9 @@ namespace LabManagement.API
             // Add DbContext
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            
+            // Add repositories
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             
             // Add services
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -94,6 +100,10 @@ namespace LabManagement.API
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
+            
+            // Add Global Exception Handling Middleware (MUST be first)
+            app.UseMiddleware<LabManagement.API.Middleware.ExceptionMiddleware>();
+            
             // if (app.Environment.IsDevelopment())
             // {
             //     app.UseSwagger();
