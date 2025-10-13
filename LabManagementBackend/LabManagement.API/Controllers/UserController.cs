@@ -1,6 +1,7 @@
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
