@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Exceptions;
 using LabManagement.DAL.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -24,15 +25,22 @@ namespace LabManagement.BLL.Implementations
         }
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
+            // Validate input
+            if (string.IsNullOrEmpty(loginDto.Email))
+                throw new BadRequestException("Email is required");
+            
+            if (string.IsNullOrEmpty(loginDto.Password))
+                throw new BadRequestException("Password is required");
+
             // Get user by email
             var user = await _userRepository.GetByEmailAsync(loginDto.Email);
             
             if (user == null)
-                return null!;
+                throw new UnauthorizedException("Invalid email or password");
 
             // Verify password using BCrypt
             if (!_passwordHasher.VerifyPassword(loginDto.Password, user.PasswordHash))
-                return null!;
+                throw new UnauthorizedException("Invalid email or password");
 
             // Create token with enhanced claims
             var claims = new[]
