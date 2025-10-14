@@ -21,8 +21,8 @@ namespace LabManagement.API
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             
-            // Add repositories
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            // Add unit of work / repositories
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Add services
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();

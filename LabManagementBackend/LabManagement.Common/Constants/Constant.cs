@@ -1,14 +1,14 @@
 ﻿namespace LabManagement.Common.Constants
 {
-    public class Constant
+    public static class Constant
     {
         public enum UserRole
         {
-            Admin = 1,
-            SchoolManager = 2,
-            LabManager = 3,
-            SecurityLab = 4,
-            Member = 5,
+            Admin = 0,
+            SchoolManager = 1,
+            LabManager = 2,
+            SecurityLab = 3,
+            Member = 4
         }
     }
 }

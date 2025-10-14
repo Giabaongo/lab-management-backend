@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using LabManagement.Common.Constants;
 
 namespace LabManagement.BLL.DTOs
 {
@@ -18,7 +19,9 @@ namespace LabManagement.BLL.DTOs
         public string Password { get; set; } = null!;
 
         [Required]
-        [Range(0, 10)]
-        public decimal Role { get; set; }
+        [EnumDataType(typeof(Constant.UserRole))]
+        public Constant.UserRole Role { get; set; }
     }
 }
+
+

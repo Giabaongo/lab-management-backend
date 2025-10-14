@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LabManagement.Common.Constants;
 
 namespace LabManagement.DAL.Models;
 
@@ -13,7 +14,7 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public decimal Role { get; set; }
+    public Constant.UserRole Role { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
