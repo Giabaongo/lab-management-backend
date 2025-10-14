@@ -13,7 +13,7 @@ namespace LabManagement.API.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "4")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

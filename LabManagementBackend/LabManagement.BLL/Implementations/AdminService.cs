@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LabManagement.BLL.Services
+namespace LabManagement.BLL.Implementations
 {
     public class AdminService : IAdminService
     {
