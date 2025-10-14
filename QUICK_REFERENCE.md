@@ -153,19 +153,19 @@ public class LabController : ControllerBase
 ## 🔐 AUTHORIZATION QUICK REFERENCE
 
 ```csharp
-[AllowAnonymous]                     // No authentication required
-[Authorize]                          // Any authenticated user
-[Authorize(Roles = "4")]            // Admin only
-[Authorize(Roles = "3,4")]          // SchoolManager or Admin
-[Authorize(Roles = "2,3,4")]        // LabManager, SchoolManager, or Admin
+[AllowAnonymous]                                       // No authentication required
+[Authorize]                                            // Any authenticated user
+[Authorize(Roles = nameof(Constant.UserRole.Admin))]   // Admin only
+[Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")] // SchoolManager or Admin
+[Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")] // LabManager, SchoolManager, Admin
 ```
 
 **Role Values:**
-- `0` = Member
-- `1` = LabSecurity
+- `0` = Admin
+- `1` = SchoolManager
 - `2` = LabManager
-- `3` = SchoolManager
-- `4` = Admin
+- `3` = SecurityLab
+- `4` = Member
 
 ---
 

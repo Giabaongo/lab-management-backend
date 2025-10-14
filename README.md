@@ -236,11 +236,11 @@ LabManagementBackend/
 
 | Role | Value | Description |
 |------|-------|-------------|
-| **Member** | 0 | Basic user |
-| **LabSecurity** | 1 | Lab security guard |
+| **Admin** | 0 | System administrator |
+| **SchoolManager** | 1 | School manager |
 | **LabManager** | 2 | Lab manager |
-| **SchoolManager** | 3 | School manager |
-| **Admin** | 4 | System administrator |
+| **SecurityLab** | 3 | Lab security guard |
+| **Member** | 4 | Basic user |
 
 ---
 

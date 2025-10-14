@@ -36,22 +36,18 @@ namespace LabManagement.DAL.Implementations
             return await _dbSet.FirstOrDefaultAsync(predicate);
         }
 
-        public virtual async Task AddAsync(T entity)
-        {
-            await _dbSet.AddAsync(entity);
-            await _context.SaveChangesAsync();
-        }
+        public virtual Task AddAsync(T entity) => _dbSet.AddAsync(entity).AsTask();
 
-        public virtual async Task UpdateAsync(T entity)
+        public virtual Task UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
-        public virtual async Task DeleteAsync(T entity)
+        public virtual Task DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
         public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)

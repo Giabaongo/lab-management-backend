@@ -1,3 +1,5 @@
+﻿using LabManagement.Common.Constants;
+
 namespace LabManagement.BLL.DTOs
 {
     public class UserDTO
@@ -5,7 +7,9 @@ namespace LabManagement.BLL.DTOs
         public int UserId { get; set; }
         public string Name { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public decimal Role { get; set; }
+        public Constant.UserRole Role { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }
+
+

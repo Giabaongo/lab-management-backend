@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using LabManagement.Common.Constants;
 
 namespace LabManagement.DAL.Models;
 
@@ -426,17 +427,19 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("password_hash");
             entity.Property(e => e.Role)
-                .HasColumnType("decimal(2, 0)")
-                .HasColumnName("role");
+                .HasColumnName("role")
+                .HasConversion(
+                    v => (int)v,
+                    v => (Constant.UserRole)v);
 
             // Seed data for Users
             // Note: In production, use proper password hashing (e.g., BCrypt)
             entity.HasData(
-                new User { UserId = 1, Name = "Admin User", Email = "admin@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 1, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 2, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 3, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 4, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 5, Name = "Member", Email = "member@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = 5, CreatedAt = new DateTime(2025, 1, 1) }
+                new User { UserId = 1, Name = "Admin User", Email = "admin@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.Admin, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.SchoolManager, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.LabManager, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.SecurityLab, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 5, Name = "Member", Email = "member@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.Member, CreatedAt = new DateTime(2025, 1, 1) }
             );
         });
 

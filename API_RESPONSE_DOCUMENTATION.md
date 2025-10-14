@@ -431,11 +431,11 @@ Tất cả API endpoints giờ sử dụng `ApiResponse<T>` wrapper với cấu 
 
 | Role | Value | Description |
 |------|-------|-------------|
-| **Member** | 0 | Basic user |
-| **LabSecurity** | 1 | Lab security guard |
+| **Admin** | 0 | System administrator |
+| **SchoolManager** | 1 | School manager |
 | **LabManager** | 2 | Lab manager |
-| **SchoolManager** | 3 | School manager |
-| **Admin** | 4 | System administrator |
+| **SecurityLab** | 3 | Lab security guard |
+| **Member** | 4 | Basic user |
 
 ---
 
@@ -443,14 +443,14 @@ Tất cả API endpoints giờ sử dụng `ApiResponse<T>` wrapper với cấu 
 
 | Endpoint | Required Roles |
 |----------|----------------|
-| `GET /api/User` | SchoolManager (3), Admin (4) |
-| `GET /api/User/{id}` | LabManager (2), SchoolManager (3), Admin (4) |
-| `GET /api/User/email/{email}` | LabManager (2), SchoolManager (3), Admin (4) |
-| `POST /api/User` | Admin (4) only |
-| `PUT /api/User/{id}` | SchoolManager (3), Admin (4) |
-| `DELETE /api/User/{id}` | Admin (4) only |
-| `GET /api/User/{id}/exists` | LabManager (2), SchoolManager (3), Admin (4) |
-| `GET /api/User/email/{email}/exists` | LabManager (2), SchoolManager (3), Admin (4) |
+| `GET /api/User` | SchoolManager (1), Admin (0) |
+| `GET /api/User/{id}` | LabManager (2), SchoolManager (1), Admin (0) |
+| `GET /api/User/email/{email}` | LabManager (2), SchoolManager (1), Admin (0) |
+| `POST /api/User` | Admin (0) only |
+| `PUT /api/User/{id}` | SchoolManager (1), Admin (0) |
+| `DELETE /api/User/{id}` | Admin (0) only |
+| `GET /api/User/{id}/exists` | LabManager (2), SchoolManager (1), Admin (0) |
+| `GET /api/User/email/{email}/exists` | LabManager (2), SchoolManager (1), Admin (0) |
 
 ---
 
