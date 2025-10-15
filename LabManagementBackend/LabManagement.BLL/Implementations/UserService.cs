@@ -1,4 +1,5 @@
-﻿using LabManagement.BLL.DTOs;
+using AutoMapper;
+using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
@@ -9,81 +10,43 @@ namespace LabManagement.BLL.Implementations
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IMapper _mapper;
 
-        public UserService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher)
+        public UserService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
         {
             var users = await _unitOfWork.Users.GetAllAsync();
-            return users.Select(u => new UserDTO
-            {
-                UserId = u.UserId,
-                Name = u.Name,
-                Email = u.Email,
-                Role = u.Role,
-                CreatedAt = u.CreatedAt
-            });
+            return _mapper.Map<IEnumerable<UserDTO>>(users);
         }
 
         public async Task<UserDTO?> GetUserByIdAsync(int id)
         {
             var user = await _unitOfWork.Users.GetByIdAsync(id);
-            if (user == null) return null;
-
-            return new UserDTO
-            {
-                UserId = user.UserId,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                CreatedAt = user.CreatedAt
-            };
+            return user == null ? null : _mapper.Map<UserDTO>(user);
         }
 
         public async Task<UserDTO?> GetUserByEmailAsync(string email)
         {
             var user = await _unitOfWork.Users.GetByEmailAsync(email);
-            if (user == null) return null;
-
-            return new UserDTO
-            {
-                UserId = user.UserId,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                CreatedAt = user.CreatedAt
-            };
+            return user == null ? null : _mapper.Map<UserDTO>(user);
         }
 
         public async Task<UserDTO> CreateUserAsync(CreateUserDTO createUserDto)
         {
-            // Hash the password before storing
-            var passwordHash = _passwordHasher.HashPassword(createUserDto.Password);
-
-            var user = new User
-            {
-                Name = createUserDto.Name,
-                Email = createUserDto.Email,
-                PasswordHash = passwordHash, // Store hashed password
-                Role = createUserDto.Role,
-                CreatedAt = DateTime.UtcNow
-            };
+            var user = _mapper.Map<User>(createUserDto);
+            user.PasswordHash = _passwordHasher.HashPassword(createUserDto.Password);
+            user.CreatedAt = DateTime.UtcNow;
 
             await _unitOfWork.Users.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return new UserDTO
-            {
-                UserId = user.UserId,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                CreatedAt = user.CreatedAt
-            };
+            return _mapper.Map<UserDTO>(user);
         }
 
         public async Task<UserDTO?> UpdateUserAsync(int id, UpdateUserDTO updateUserDto)
@@ -91,30 +54,17 @@ namespace LabManagement.BLL.Implementations
             var user = await _unitOfWork.Users.GetByIdAsync(id);
             if (user == null) return null;
 
-            if (!string.IsNullOrEmpty(updateUserDto.Name))
-                user.Name = updateUserDto.Name;
+            _mapper.Map(updateUserDto, user);
 
-            if (!string.IsNullOrEmpty(updateUserDto.Email))
-                user.Email = updateUserDto.Email;
-
-            // Hash the password if it's being updated
             if (!string.IsNullOrEmpty(updateUserDto.Password))
+            {
                 user.PasswordHash = _passwordHasher.HashPassword(updateUserDto.Password);
-
-            if (updateUserDto.Role.HasValue)
-                user.Role = updateUserDto.Role.Value;
+            }
 
             await _unitOfWork.Users.UpdateAsync(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return new UserDTO
-            {
-                UserId = user.UserId,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                CreatedAt = user.CreatedAt
-            };
+            return _mapper.Map<UserDTO>(user);
         }
 
         public async Task<bool> DeleteUserAsync(int id)
@@ -138,5 +88,3 @@ namespace LabManagement.BLL.Implementations
         }
     }
 }
-
-
