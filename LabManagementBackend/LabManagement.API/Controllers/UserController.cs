@@ -1,5 +1,6 @@
-using LabManagement.BLL.DTOs;
+﻿using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Constants;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -28,7 +29,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <returns>List of users</returns>
         [HttpGet]
-        [Authorize(Roles = "3,4")] // SchoolManager = 3, Admin = 4
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserDTO>>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -41,7 +42,7 @@ namespace LabManagement.API.Controllers
         /// <param name="id">User ID</param>
         /// <returns>User details</returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<UserDTO>>> GetUserById(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
@@ -58,7 +59,7 @@ namespace LabManagement.API.Controllers
         /// <param name="email">User email</param>
         /// <returns>User details</returns>
         [HttpGet("email/{email}")]
-        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<UserDTO>>> GetUserByEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -79,7 +80,7 @@ namespace LabManagement.API.Controllers
         /// <returns>Created user</returns>
         [AllowAnonymous]
         [HttpPost]
-        [Authorize(Roles = "4")] // Admin only
+        [Authorize(Roles = nameof(Constant.UserRole.Admin))]
         public async Task<ActionResult<ApiResponse<UserDTO>>> CreateUser([FromBody] CreateUserDTO createUserDto)
         {
             if (!ModelState.IsValid)
@@ -105,7 +106,7 @@ namespace LabManagement.API.Controllers
         /// <param name="updateUserDto">User update data</param>
         /// <returns>Updated user</returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "3,4")] // SchoolManager = 3, Admin = 4
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<UserDTO>>> UpdateUser(int id, [FromBody] UpdateUserDTO updateUserDto)
         {
             if (!ModelState.IsValid)
@@ -137,7 +138,7 @@ namespace LabManagement.API.Controllers
         /// <param name="id">User ID</param>
         /// <returns>Success message</returns>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "4")] // Admin only
+        [Authorize(Roles = nameof(Constant.UserRole.Admin))]
         public async Task<ActionResult<ApiResponse<object>>> DeleteUser(int id)
         {
             var result = await _userService.DeleteUserAsync(id);
@@ -157,7 +158,7 @@ namespace LabManagement.API.Controllers
         /// <param name="id">User ID</param>
         /// <returns>Boolean result</returns>
         [HttpGet("{id}/exists")]
-        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<object>>> UserExists(int id)
         {
             var exists = await _userService.UserExistsAsync(id);
@@ -173,7 +174,7 @@ namespace LabManagement.API.Controllers
         /// <param name="email">Email address</param>
         /// <returns>Boolean result</returns>
         [HttpGet("email/{email}/exists")]
-        [Authorize(Roles = "2,3,4")] // LabManager = 2, SchoolManager = 3, Admin = 4
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<object>>> EmailExists(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -187,3 +188,5 @@ namespace LabManagement.API.Controllers
         }
     }
 }
+
+

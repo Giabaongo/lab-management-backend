@@ -1,6 +1,7 @@
 ﻿using System.Text;
-using LabManagement.BLL.Interfaces;
 using LabManagement.BLL.Implementations;
+using LabManagement.BLL.Interfaces;
+using LabManagement.BLL.Mappings;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Implementations;
 using LabManagement.DAL.Models;
@@ -21,15 +22,15 @@ namespace LabManagement.API
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             
-            // Add repositories
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            // Add unit of work / repositories
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Add services
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IAdminService, AdminService>();
-
+            builder.Services.AddAutoMapper(typeof(UserProfile));
+           
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {
