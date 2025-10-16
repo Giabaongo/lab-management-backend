@@ -31,16 +31,16 @@ namespace LabManagement.API.Controllers
             {
                 return BadRequest(new { message = "Role is required." });
             }
-            var roleValue = (int)updateUserDTO.Role;
-                if (updateUserDTO.Role != 4)
-                {
-                    // If the string is not a valid role (e.g., "SuperUser"), return an error.
-                    return BadRequest(new { message = "Invalid role specified." });
-                }
-                else
-                {
-                    roleValue = (int)Constant.UserRole.Admin;
-                }
+            var roleValue = (int)updateUserDTO.Role.Value;
+            if (updateUserDTO.Role.Value != Constant.UserRole.Admin)
+            {
+                // If the role is not Admin, return an error.
+                return BadRequest(new { message = "Invalid role specified." });
+            }
+            else
+            {
+                roleValue = (int)Constant.UserRole.Admin;
+            }
             // Step 2: Call the service with the validated data
             var success = await _adminService.UpdateUserRoleAsync(userId, (Constant.UserRole)roleValue);
 
