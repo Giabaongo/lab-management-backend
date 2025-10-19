@@ -1,5 +1,8 @@
-﻿using LabManagement.BLL.DTOs;
+﻿using AutoMapper;
+using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.DAL.Interfaces;
+using LabManagement.DAL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,25 +13,62 @@ namespace LabManagement.BLL.Implementations
 {
     public class LabService : ILabService
     {
-        public Task<LabDTO> createLab(LabDTO labDTO)
-        {
+        private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
-            throw new NotImplementedException();
+        public LabService(IMapper mapper, IUnitOfWork unitOfWork)
+        {
+            _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
-        public Task<LabDTO> getAllLabs(LabDTO labDTO)
+        public async Task<LabDTO> CreateLabAsync(CreateLabDTO createLabDTO)
         {
-            throw new NotImplementedException();
+            var lab = _mapper.Map<Lab>(createLabDTO);
+            await _unitOfWork.Labs.AddAsync(lab);
+            await _unitOfWork.SaveChangesAsync();
+
+            return _mapper.Map<LabDTO>(lab);
         }
 
-        public Task<LabDTO> getLab(int id)
+        public async Task<bool> DeleteLabAsync(int id)
         {
-            throw new NotImplementedException();
+            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            if(lab == null) return false;
+
+            await _unitOfWork.Labs.DeleteAsync(lab);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
         }
 
-        public Task<LabDTO> updateLab(LabDTO labDTO)
+        public async Task<IEnumerable<LabDTO>> GetAllLabsAsync()
         {
-            throw new NotImplementedException();
+            var labs = await _unitOfWork.Labs.GetAllAsync();
+            return _mapper.Map<IEnumerable<LabDTO>>(labs);
+        }
+
+        public async Task<LabDTO?> GetLabByIdAsync(int id)
+        {
+            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            return lab == null ? null : _mapper.Map<LabDTO>(lab);
+        }
+
+        public async Task<bool> LabExistsAsync(string name)
+        {
+            return await _unitOfWork.Labs.ExistsAsync(l => l.Name == name);
+        }
+
+        public async Task<LabDTO?> UpdateLabAsync(UpdateLabDTO updateLabDTO, string name)
+        {
+            var lab = await _unitOfWork.Labs.FirstOrDefaultAsync(l => l.Name == name);
+            if (lab != null)
+            {
+                _mapper.Map(updateLabDTO, lab);
+                await _unitOfWork.Labs.UpdateAsync(lab);
+                await _unitOfWork.SaveChangesAsync();
+                return _mapper.Map<LabDTO>(lab);
+            }
+            return null;
         }
     }
 }

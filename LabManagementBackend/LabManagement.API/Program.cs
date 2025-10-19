@@ -29,8 +29,9 @@ namespace LabManagement.API
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddAutoMapper(typeof(UserProfile));
-           
+            builder.Services.AddScoped<ILabService, LabService>();
+            builder.Services.AddAutoMapper(typeof(UserProfile),typeof(LabProfile));
+          
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {

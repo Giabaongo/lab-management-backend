@@ -1,4 +1,5 @@
 ﻿using LabManagement.BLL.DTOs;
+using LabManagement.DAL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,11 @@ namespace LabManagement.BLL.Interfaces
 {
     public interface ILabService
     {
-        Task<LabDTO> createLab(LabDTO labDTO);
-        Task<LabDTO> getLab(int id);
-        Task<LabDTO> getAllLabs(LabDTO labDTO);
-        Task<LabDTO> updateLab(LabDTO labDTO);
-        
+        Task<IEnumerable<LabDTO>> GetAllLabsAsync();
+        Task<LabDTO?> GetLabByIdAsync(int id);
+        Task<LabDTO> CreateLabAsync(CreateLabDTO createLabDTO);
+        Task<LabDTO?> UpdateLabAsync(UpdateLabDTO updateLabDTO, string name);
+        Task<bool> DeleteLabAsync(int id);
+        Task<bool> LabExistsAsync(string name);
     }
 }

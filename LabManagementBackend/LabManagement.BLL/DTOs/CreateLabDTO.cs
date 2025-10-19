@@ -16,7 +16,7 @@ namespace LabManagement.BLL.DTOs
         public string name { get; set; } = null!;
 
         [Required]
-        public int mananger_Id { get; set; }
+        public int managerId { get; set; }
 
         [Required]
         [StringLength(100)]
