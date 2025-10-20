@@ -4,6 +4,7 @@ using LabManagement.Common.Constants;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
@@ -13,7 +14,6 @@ namespace LabManagement.API.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -77,6 +77,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <param name="createUserDto">User creation data</param>
         /// <returns>Created user</returns>
+        [AllowAnonymous]
         [HttpPost]
         [Authorize(Roles = nameof(Constant.UserRole.Admin))]
         public async Task<ActionResult<ApiResponse<UserDTO>>> CreateUser([FromBody] CreateUserDTO createUserDto)

@@ -9,6 +9,7 @@ namespace LabManagement.DAL.Implementations
     {
         private readonly LabManagementDbContext _context;
         private IUserRepository? _userRepository;
+        private ILabRepository? _labRepository;
 
         public UnitOfWork(LabManagementDbContext context)
         {
@@ -16,6 +17,8 @@ namespace LabManagement.DAL.Implementations
         }
 
         public IUserRepository Users => _userRepository ??= new UserRepository(_context);
+
+        public ILabRepository Labs => _labRepository ??= new LabRepository(_context); // Implemented here
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -28,5 +31,3 @@ namespace LabManagement.DAL.Implementations
         }
     }
 }
-
-

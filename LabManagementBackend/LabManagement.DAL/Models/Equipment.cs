@@ -15,7 +15,7 @@ public partial class Equipment
 
     public string? Description { get; set; }
 
-    public decimal Status { get; set; }
+    public int Status { get; set; }
 
     public virtual Lab Lab { get; set; } = null!;
 }

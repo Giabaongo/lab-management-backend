@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LabManagement.Common.Constants;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using LabManagement.Common.Constants;
 
 namespace LabManagement.DAL.Models;
 
@@ -101,7 +101,6 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("start_time");
             entity.Property(e => e.Status)
-                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("status");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
@@ -144,7 +143,6 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("name");
             entity.Property(e => e.Status)
-                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("status");
 
             entity.HasOne(d => d.Lab).WithMany(p => p.Equipment)
@@ -170,7 +168,6 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Role)
-                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("role");
 
             entity.HasOne(d => d.Event).WithMany(p => p.EventParticipants)
@@ -241,7 +238,6 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("start_time");
             entity.Property(e => e.Status)
-                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("status");
             entity.Property(e => e.Title)
                 .HasMaxLength(200)
@@ -374,7 +370,6 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.LogId).HasColumnName("log_id");
             entity.Property(e => e.Action)
-                .HasColumnType("decimal(2, 0)")
                 .HasColumnName("action");
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.Notes)
@@ -427,19 +422,16 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("password_hash");
             entity.Property(e => e.Role)
-                .HasColumnName("role")
-                .HasConversion(
-                    v => (int)v,
-                    v => (Constant.UserRole)v);
+                .HasColumnName("role");
 
             // Seed data for Users
             // Note: In production, use proper password hashing (e.g., BCrypt)
             entity.HasData(
-                new User { UserId = 1, Name = "Admin User", Email = "admin@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.Admin, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.SchoolManager, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.LabManager, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.SecurityLab, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 5, Name = "Member", Email = "member@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = Constant.UserRole.Member, CreatedAt = new DateTime(2025, 1, 1) }
+                new User { UserId = 1, Name = "Admin User", Email = "admin@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.Admin, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.SchoolManager, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.LabManager, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.SecurityLab, CreatedAt = new DateTime(2025, 1, 1) },
+                new User { UserId = 5, Name = "Member", Email = "member@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.Member, CreatedAt = new DateTime(2025, 1, 1) }
             );
         });
 
