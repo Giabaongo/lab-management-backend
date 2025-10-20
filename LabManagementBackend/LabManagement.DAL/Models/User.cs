@@ -14,7 +14,7 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public Constant.UserRole Role { get; set; }
+    public int Role { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

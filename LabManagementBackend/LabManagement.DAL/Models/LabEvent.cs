@@ -23,7 +23,7 @@ public partial class LabEvent
 
     public DateTime EndTime { get; set; }
 
-    public decimal Status { get; set; }
+    public int Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

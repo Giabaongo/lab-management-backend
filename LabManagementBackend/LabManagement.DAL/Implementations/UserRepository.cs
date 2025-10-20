@@ -1,4 +1,3 @@
-using System.Linq;
 using LabManagement.Common.Constants;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
@@ -19,7 +18,7 @@ namespace LabManagement.DAL.Implementations
 
         public async Task<IEnumerable<User>> GetByRoleAsync(Constant.UserRole role)
         {
-            return await _dbSet.Where(u => u.Role == role).ToListAsync();
+            return await _dbSet.Where(u => u.Role == (int)role).ToListAsync();
         }
 
         public async Task<bool> EmailExistsAsync(string email)

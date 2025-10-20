@@ -26,7 +26,7 @@ namespace LabManagement.BLL.Implementations
                 return false;
             }
 
-            getUser.Role = (Constant.UserRole)newRole;
+            getUser.Role = (int)newRole;
             await _IUserRepo.UpdateAsync(getUser);
 
             return true;
