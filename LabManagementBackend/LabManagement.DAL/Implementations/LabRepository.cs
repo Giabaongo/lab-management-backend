@@ -1,6 +1,7 @@
 ﻿using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +15,11 @@ namespace LabManagement.DAL.Implementations
         public LabRepository(LabManagementDbContext context) : base(context)
         {
         }
+
+        public async Task<Lab> CreateLabAsync(Lab lab)
+        {
+            var entry = await _dbSet.AddAsync(lab);
+            return entry.Entity;
+        } 
     }
 }
