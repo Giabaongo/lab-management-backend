@@ -16,10 +16,10 @@ namespace LabManagement.DAL.Implementations
         {
         }
 
-        public async Task<Lab> CreateLabAsync(Lab lab)
-        {
-            var entry = await _dbSet.AddAsync(lab);
-            return entry.Entity;
-        } 
+        //public async Task<Lab> CreateLabAsync(Lab lab)
+        //{
+        //    var entry = await _dbSet.AddAsync(lab);
+        //    return entry.Entity;
+        //} 
     }
 }
