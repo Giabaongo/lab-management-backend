@@ -50,8 +50,8 @@ namespace LabManagement.BLL.Implementations
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString(CultureInfo.InvariantCulture)),
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("Role", ((int)user.Role).ToString(CultureInfo.InvariantCulture))
+                new Claim(ClaimTypes.Role, ((Common.Constants.Constant.UserRole)user.Role).ToString()),
+                new Claim("Role", user.Role.ToString(CultureInfo.InvariantCulture))
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? ""));
@@ -72,4 +72,3 @@ namespace LabManagement.BLL.Implementations
         }
     }
 }
-

@@ -7,6 +7,7 @@ namespace LabManagement.DAL.Interfaces
     {
         IUserRepository Users { get; }
         ILabRepository Labs { get; }
+        IBookingRepository Bookings { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
         
