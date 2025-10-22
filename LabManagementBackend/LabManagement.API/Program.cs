@@ -33,8 +33,9 @@ namespace LabManagement.API
             builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<ILabZoneService, LabZoneService>();
             builder.Services.AddScoped<IActivityTypeService, ActivityTypeService>();
+            builder.Services.AddScoped<ILabEventService, LabEventService>();
             builder.Services.AddScoped<ISecurityLogService, SecurityLogService>();
-            builder.Services.AddAutoMapper(typeof(UserProfile), typeof(LabProfile), typeof(BookingProfile), typeof(LabZoneProfile), typeof(ActivityTypeProfile), typeof(SecurityLogProfile));
+            builder.Services.AddAutoMapper(typeof(UserProfile), typeof(LabProfile), typeof(BookingProfile), typeof(LabZoneProfile), typeof(ActivityTypeProfile), typeof(LabEventProfile), typeof(SecurityLogProfile));
           
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
