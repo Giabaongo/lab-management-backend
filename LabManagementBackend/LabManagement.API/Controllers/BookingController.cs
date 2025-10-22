@@ -109,7 +109,7 @@ namespace LabManagement.API.Controllers
             if (!result)
                 throw new NotFoundException("Booking", id);
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Booking deleted successfully"));
+            return Ok(ApiResponse<object>.SuccessResponse(new { }, "Booking deleted successfully"));
         }
     }
 }
