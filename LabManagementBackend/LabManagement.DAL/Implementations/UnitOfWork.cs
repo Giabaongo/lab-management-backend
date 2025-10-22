@@ -11,6 +11,7 @@ namespace LabManagement.DAL.Implementations
         private IUserRepository? _userRepository;
         private ILabRepository? _labRepository;
         private IBookingRepository? _bookingRepository;
+        private ILabZoneRepository? _labZoneRepository;
         private IActivityTypeRepository? _activityTypeRepository;
         private ISecurityLogRepository? _securityLogRepository;
 
@@ -25,6 +26,7 @@ namespace LabManagement.DAL.Implementations
 
         public IBookingRepository Bookings => _bookingRepository ??= new BookingRepository(_context);
 
+        public ILabZoneRepository LabZones => _labZoneRepository ??= new LabZoneRepository(_context);
         public IActivityTypeRepository ActivityTypes => _activityTypeRepository ??= new ActivityTypeRepository(_context);
 
         public ISecurityLogRepository SecurityLogs => _securityLogRepository ??= new SecurityLogRepository(_context);
