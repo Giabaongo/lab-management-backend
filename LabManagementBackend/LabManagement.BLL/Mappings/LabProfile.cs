@@ -28,6 +28,7 @@ namespace LabManagement.BLL.Mappings
 
             CreateMap<UpdateLabDTO, Lab>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.name))
+                .ForMember(dest => dest.ManagerId, opt => opt.MapFrom(src => src.mananger_Id))
                 .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.location))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.description))
                 .ForMember(dest => dest.ManagerId, opt => opt.MapFrom(src => src.mananger_Id));

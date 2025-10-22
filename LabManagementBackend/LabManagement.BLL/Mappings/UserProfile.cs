@@ -1,4 +1,4 @@
-using AutoMapper;
+    using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.DAL.Models;
 
@@ -8,6 +8,7 @@ namespace LabManagement.BLL.Mappings
     {
         public UserProfile()
         {
+            //Get all, get by id    
             CreateMap<User, UserDTO>();
 
             CreateMap<CreateUserDTO, User>()
