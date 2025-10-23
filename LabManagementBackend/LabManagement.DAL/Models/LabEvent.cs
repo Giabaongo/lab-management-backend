@@ -27,6 +27,8 @@ public partial class LabEvent
 
     public DateTime CreatedAt { get; set; }
 
+    public byte[] RowVersion { get; set; } = null!;
+
     public virtual ActivityType ActivityType { get; set; } = null!;
 
     public virtual ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();

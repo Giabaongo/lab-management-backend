@@ -62,7 +62,8 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ActivityTypeId).HasColumnName("activity_type_id");
             entity.Property(e => e.Description)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
@@ -87,18 +88,23 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("created_at");
             entity.Property(e => e.EndTime)
-                .HasColumnType("datetime")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Notes)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("notes");
+            entity.Property(e => e.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken()
+                .HasColumnName("row_version");
             entity.Property(e => e.StartTime)
-                .HasColumnType("datetime")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("start_time");
             entity.Property(e => e.Status)
                 .HasColumnName("status");
@@ -135,7 +141,8 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("code");
             entity.Property(e => e.Description)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Name)
@@ -189,7 +196,8 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Description)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.Location)
                 .HasMaxLength(255)
@@ -223,19 +231,24 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.ActivityTypeId).HasColumnName("activity_type_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.EndTime)
-                .HasColumnType("datetime")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.OrganizerId).HasColumnName("organizer_id");
+            entity.Property(e => e.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken()
+                .HasColumnName("row_version");
             entity.Property(e => e.StartTime)
-                .HasColumnType("datetime")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("start_time");
             entity.Property(e => e.Status)
                 .HasColumnName("status");
@@ -274,7 +287,8 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
             entity.Property(e => e.Description)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Name)
@@ -305,14 +319,17 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.NotificationId).HasColumnName("notification_id");
             entity.Property(e => e.EventId).HasColumnName("event_id");
-            entity.Property(e => e.IsRead).HasColumnName("is_read");
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false)
+                .HasColumnName("is_read");
             entity.Property(e => e.Message)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("message");
             entity.Property(e => e.RecipientId).HasColumnName("recipient_id");
             entity.Property(e => e.SentAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("sent_at");
 
             entity.HasOne(d => d.Event).WithMany(p => p.Notifications)
@@ -334,11 +351,12 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ReportId).HasColumnName("report_id");
             entity.Property(e => e.Content)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("content");
             entity.Property(e => e.GeneratedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("generated_at");
             entity.Property(e => e.GeneratedBy).HasColumnName("generated_by");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
@@ -369,21 +387,26 @@ public partial class LabManagementDbContext : DbContext
             entity.ToTable("security_logs");
 
             entity.Property(e => e.LogId).HasColumnName("log_id");
-            entity.Property(e => e.Action)
-                .HasColumnName("action");
+            entity.Property(e => e.ActionType)
+                .HasColumnName("action_type");
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.Notes)
-                .HasColumnType("text")
+                .HasMaxLength(-1)
+                .IsUnicode(false)
                 .HasColumnName("notes");
             entity.Property(e => e.PhotoUrl)
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("photo_url");
+            entity.Property(e => e.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken()
+                .HasColumnName("row_version");
             entity.Property(e => e.SecurityId).HasColumnName("security_id");
-            entity.Property(e => e.Timestamp)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("timestamp");
+            entity.Property(e => e.LoggedAt)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnType("datetime2(3)")
+                .HasColumnName("logged_at");
 
             entity.HasOne(d => d.Event).WithMany(p => p.SecurityLogs)
                 .HasForeignKey(d => d.EventId)
@@ -406,8 +429,8 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnType("datetime2(3)")
                 .HasColumnName("created_at");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
