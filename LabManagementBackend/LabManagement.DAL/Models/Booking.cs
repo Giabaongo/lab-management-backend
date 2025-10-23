@@ -23,6 +23,8 @@ public partial class Booking
 
     public string? Notes { get; set; }
 
+    public byte[] RowVersion { get; set; } = null!;
+
     public virtual Lab Lab { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
