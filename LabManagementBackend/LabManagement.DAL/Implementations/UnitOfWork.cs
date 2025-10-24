@@ -12,6 +12,7 @@ namespace LabManagement.DAL.Implementations
         private ILabRepository? _labRepository;
         private IBookingRepository? _bookingRepository;
         private ILabZoneRepository? _labZoneRepository;
+        private IEquipmentRepository? _equipmentRepository;
 
         public UnitOfWork(LabManagementDbContext context)
         {
@@ -26,6 +27,7 @@ namespace LabManagement.DAL.Implementations
 
         public ILabZoneRepository LabZones => _labZoneRepository ??= new LabZoneRepository(_context);
 
+        public IEquipmentRepository Equipment => _equipmentRepository ??= new EquipmentRepository(_context);
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return _context.SaveChangesAsync(cancellationToken);
