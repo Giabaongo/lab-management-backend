@@ -14,6 +14,8 @@ namespace LabManagement.DAL.Implementations
         private ILabZoneRepository? _labZoneRepository;
         private IActivityTypeRepository? _activityTypeRepository;
         private ISecurityLogRepository? _securityLogRepository;
+        private IEquipmentRepository? _equipmentRepository;
+        private INotificationRepository? _notificationRepository;
 
         public UnitOfWork(LabManagementDbContext context)
         {
@@ -32,6 +34,9 @@ namespace LabManagement.DAL.Implementations
         public ISecurityLogRepository SecurityLogs => _securityLogRepository ??= new SecurityLogRepository(_context);
 
         public IEquipmentRepository Equipment => _equipmentRepository ??= new EquipmentRepository(_context);
+
+        public INotificationRepository Notifications => _notificationRepository ??= new NotificationRepository(_context);
+
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return _context.SaveChangesAsync(cancellationToken);

@@ -11,6 +11,8 @@ namespace LabManagement.DAL.Interfaces
         ILabZoneRepository LabZones { get; }
         IActivityTypeRepository ActivityTypes { get; }
         ISecurityLogRepository SecurityLogs { get; }
+        IEquipmentRepository Equipment { get; }
+        INotificationRepository Notifications { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
         

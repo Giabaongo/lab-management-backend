@@ -11,8 +11,8 @@ namespace LabManagement.BLL.Interfaces
     {
         Task<IEnumerable<NotificationDTO>> GetAllNotificationsAsync();
         Task<NotificationDTO?> GetNotificationByIdAsync(int id);
-        Task<NotificationDTO> CreateNotificationAsync(NotificationDTO notificationDTO);
-        Task<NotificationDTO?> UpdateNotificationAsync(int id, NotificationDTO notificationDTO);
+        Task<NotificationDTO> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO);
+        Task<NotificationDTO?> UpdateNotificationAsync(int id, UpdateNotificationDTO updateNotificationDTO);
         Task<bool> DeleteNotificationAsync(int id);
         Task<bool> NotificationIdExistsAsync(int id);
         Task<bool> MarkAsReadAsync(int id);
