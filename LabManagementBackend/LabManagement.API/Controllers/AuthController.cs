@@ -8,7 +8,7 @@ namespace LabManagement.API.Controllers
     /// <summary>
     /// Authentication endpoints
     /// </summary>
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {

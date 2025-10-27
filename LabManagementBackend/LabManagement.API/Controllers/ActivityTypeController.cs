@@ -11,7 +11,7 @@ namespace LabManagement.API.Controllers
     /// Activity Type management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/activity-types")]
     public class ActivityTypeController : ControllerBase
     {
         private readonly IActivityTypeService _activityTypeService;

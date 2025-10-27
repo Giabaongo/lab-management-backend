@@ -12,10 +12,10 @@ using Microsoft.VisualBasic;
 namespace LabManagement.API.Controllers
 {
     /// <summary>
-    /// User management endpoints
+    /// Lab management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/labs")]
     public class LabController : ControllerBase
     {
         private readonly ILabService _labService;
