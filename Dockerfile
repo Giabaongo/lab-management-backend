@@ -25,11 +25,12 @@ WORKDIR /app
 # Copy published app từ build stage
 COPY --from=build-env /app/out .
 
-# Set environment variables for port
-ENV ASPNETCORE_URLS=http://+:80
+# Render sets PORT env variable dynamically
+# Default to 80 if PORT is not set (for local testing)
+ENV ASPNETCORE_URLS=http://+:${PORT:-80}
 
-# Expose port
-EXPOSE 80
+# Expose port (Render will override this)
+EXPOSE ${PORT:-80}
 
 # Entry point
 ENTRYPOINT ["dotnet", "LabManagement.API.dll"]
