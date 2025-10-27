@@ -11,15 +11,17 @@ services:
       - "8080:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      # Azure SQL Database v2 - LabManagementDB_v2
-      - ConnectionStrings__DefaultConnection=server=bao-sql-server.database.windows.net; database=LabManagementDB_v2; uid=giabaongo; pwd=abcd1234@; TrustServerCertificate=False; Trusted_Connection=False;
-      # JWT Configuration (có thể override từ Azure App Settings)
-      - Jwt__Key=SuperSecretKeyForJwtGenerationSuperSecretKeyForJwtGenerationSuperSecretKeyForJwtGeneration
-      - Jwt__Issuer=LabManagementAPI
-      - Jwt__Audience=LabManagementUsers
+      # Azure SQL Database - Use environment variables
+      - ConnectionStrings__DefaultConnection=Server=${DB_SERVER};Database=${DB_NAME};User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=False;Trusted_Connection=False;
+      # JWT Configuration - Use environment variables
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-LabManagementAPI}
+      - Jwt__Audience=${JWT_AUDIENCE:-LabManagementUsers}
     restart: unless-stopped
     networks:
       - lab-network
+    env_file:
+      - .env
 
 networks:
   lab-network:
