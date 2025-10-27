@@ -3,17 +3,17 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /app
 
 # Copy solution file và project files
-COPY LabManagementBackend/*.sln ./
-COPY LabManagementBackend/LabManagement.API/*.csproj ./LabManagement.API/
-COPY LabManagementBackend/LabManagement.BLL/*.csproj ./LabManagement.BLL/
-COPY LabManagementBackend/LabManagement.DAL/*.csproj ./LabManagement.DAL/
-COPY LabManagementBackend/LabManagement.Common/*.csproj ./LabManagement.Common/
+COPY *.sln ./
+COPY LabManagement.API/*.csproj ./LabManagement.API/
+COPY LabManagement.BLL/*.csproj ./LabManagement.BLL/
+COPY LabManagement.DAL/*.csproj ./LabManagement.DAL/
+COPY LabManagement.Common/*.csproj ./LabManagement.Common/
 
 # Restore dependencies
 RUN dotnet restore
 
 # Copy toàn bộ source code
-COPY LabManagementBackend/ ./
+COPY . ./
 
 # Build application
 RUN dotnet publish LabManagement.API/LabManagement.API.csproj -c Release -o out

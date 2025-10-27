@@ -18,9 +18,20 @@ namespace LabManagement.API
         {
             var builder = WebApplication.CreateBuilder(args);
             
+            // Debug: Log connection string (first 50 chars for security)
+            var connString = builder.Configuration.GetConnectionString("DefaultConnection");
+            if (!string.IsNullOrEmpty(connString))
+            {
+                Console.WriteLine($"🔍 Connection String Preview: {connString.Substring(0, Math.Min(50, connString.Length))}...");
+            }
+            else
+            {
+                Console.WriteLine("⚠️  WARNING: Connection String is empty!");
+            }
+            
             // Add DbContext
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(connString));
             
             // Add unit of work / repositories
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
