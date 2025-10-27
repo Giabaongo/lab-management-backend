@@ -10,7 +10,7 @@ namespace LabManagement.BLL.Mappings
         {
             CreateMap<SecurityLog, SecurityLogDTO>();
             CreateMap<CreateSecurityLogDTO, SecurityLog>()
-                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => DateTime.UtcNow));
+                .ForMember(dest => dest.LoggedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
             CreateMap<UpdateSecurityLogDTO, SecurityLog>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }

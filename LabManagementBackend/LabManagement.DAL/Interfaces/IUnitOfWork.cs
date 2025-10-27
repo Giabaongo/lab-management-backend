@@ -10,6 +10,7 @@ namespace LabManagement.DAL.Interfaces
         IBookingRepository Bookings { get; }
         ILabZoneRepository LabZones { get; }
         IActivityTypeRepository ActivityTypes { get; }
+        ILabEventRepository LabEvents { get; }
         ISecurityLogRepository SecurityLogs { get; }
         IEquipmentRepository Equipment { get; }
         INotificationRepository Notifications { get; }

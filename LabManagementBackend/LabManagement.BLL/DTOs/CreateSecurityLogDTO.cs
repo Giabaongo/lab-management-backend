@@ -10,8 +10,8 @@ namespace LabManagement.BLL.DTOs
         [Required(ErrorMessage = "SecurityId is required")]
         public int SecurityId { get; set; }
 
-        [Required(ErrorMessage = "Action is required")]
-        public int Action { get; set; }
+        [Required(ErrorMessage = "ActionType is required")]
+        public int ActionType { get; set; }
 
         public string? PhotoUrl { get; set; }
 
@@ -25,7 +25,7 @@ namespace LabManagement.BLL.DTOs
 
         public int? SecurityId { get; set; }
 
-        public int? Action { get; set; }
+        public int? ActionType { get; set; }
 
         public string? PhotoUrl { get; set; }
 

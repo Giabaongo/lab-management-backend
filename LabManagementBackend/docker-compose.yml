@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql2022
+    hostname: sql1
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Giabaongo123
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      # Persist database data
+      - sqlserver_data:/var/opt/mssql
+      # Mount SQL scripts for easy access
+      - ./LabManagement.DAL:/sql-scripts:ro
+    networks:
+      - lab-network
+    restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Giabaongo123 -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  sqlserver_data:
+    driver: local
+
+networks:
+  lab-network:
+    driver: bridge
