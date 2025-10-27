@@ -14,7 +14,7 @@ namespace LabManagement.API.Controllers
     /// Lab zone management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/lab-zones")]
     public class LabZoneController : ControllerBase
     {
         public readonly ILabZoneService _labZoneService;
@@ -73,7 +73,11 @@ namespace LabManagement.API.Controllers
             }
 
             //Check if Lab Zone with the same name already exists
-            if(await _labZoneService.LabZoneNameExistsAsync(createLabZoneDTO.Name));
+            if(await _labZoneService.LabZoneNameExistsAsync(createLabZoneDTO.Name))
+            {
+                throw new BadRequestException($"Lab Zone with name '{createLabZoneDTO.Name}' already exists");
+            }
+            
             var labZone = await _labZoneService.CreateLabZoneAsync(createLabZoneDTO);
             return Ok(ApiResponse<LabZoneDTO>.SuccessResponse(labZone, "Lab Zone created successfully"));
         }

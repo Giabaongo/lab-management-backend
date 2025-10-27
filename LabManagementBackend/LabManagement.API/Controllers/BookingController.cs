@@ -12,7 +12,7 @@ namespace LabManagement.API.Controllers
     /// Booking management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/bookings")]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;

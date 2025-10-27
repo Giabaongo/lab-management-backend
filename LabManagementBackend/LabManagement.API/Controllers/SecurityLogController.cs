@@ -11,7 +11,7 @@ namespace LabManagement.API.Controllers
     /// Security Log management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/security-logs")]
     public class SecurityLogController : ControllerBase
     {
         private readonly ISecurityLogService _securityLogService;

@@ -11,7 +11,7 @@ namespace LabManagement.API.Controllers
     /// Lab Event management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/lab-events")]
     public class LabEventController : ControllerBase
     {
         private readonly ILabEventService _labEventService;
