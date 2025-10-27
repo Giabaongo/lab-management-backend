@@ -6,10 +6,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: lab-management-api
+    container_name: lab-management-api-prod
     ports:
       - "8080:80"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      # Sử dụng Azure SQL Database hiện tại của bạn
-      - ConnectionStrings__DefaultConnection=server=bao-sql-server.database.windows.net; database=LabManagementDB; uid=giabaongo; pwd=abcd1234@; TrustServerCertificate=False; Trusted_Connection=False;
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Azure SQL Database v2 - LabManagementDB_v2
+      - ConnectionStrings__DefaultConnection=server=bao-sql-server.database.windows.net; database=LabManagementDB_v2; uid=giabaongo; pwd=abcd1234@; TrustServerCertificate=False; Trusted_Connection=False;
+      # JWT Configuration (có thể override từ Azure App Settings)
+      - Jwt__Key=SuperSecretKeyForJwtGenerationSuperSecretKeyForJwtGenerationSuperSecretKeyForJwtGeneration
+      - Jwt__Issuer=LabManagementAPI
+      - Jwt__Audience=LabManagementUsers
+    restart: unless-stopped
+    networks:
+      - lab-network
+
+networks:
+  lab-network:
+    driver: bridge
