@@ -28,7 +28,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <returns>List of lab zones</returns>
         [HttpGet]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<LabZoneDTO>>>> GetAllLabZones()
         {
             var labZone = await _labZoneService.GetAllLabZonesAsync();
