@@ -63,3 +63,14 @@ $RECYCLE.BIN/
 # Configuration files with sensitive data
 # **/appsettings.json
 **/appsettings.*.json
+!**/appsettings.Production.json
+
+# Environment variables (NEVER COMMIT!)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Secrets
+secrets.json
+appsettings.Secrets.json
