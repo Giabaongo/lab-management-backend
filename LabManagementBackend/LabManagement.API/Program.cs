@@ -80,6 +80,30 @@ namespace LabManagement.API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 
+            // Add CORS - Allow Frontend to call API
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+                
+                // More restrictive policy for production (recommended)
+                options.AddPolicy("ProductionPolicy", policy =>
+                {
+                    policy.WithOrigins(
+                            "http://localhost:3000",      // React dev
+                            "http://localhost:5173",      // Vite dev
+                            "https://lab-management-fe.vercel.app/"  // Production frontend
+                          )
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            });
+
             //Bearer
             builder.Services.AddSwaggerGen(options =>
             {
@@ -123,6 +147,9 @@ namespace LabManagement.API
             
             // Add Global Exception Handling Middleware (MUST be first)
             app.UseMiddleware<LabManagement.API.Middleware.ExceptionMiddleware>();
+            
+            // Enable CORS (MUST be before Authentication/Authorization)
+            app.UseCors("AllowAll");  // Use "ProductionPolicy" for production
             
             // if (app.Environment.IsDevelopment())
             // {
