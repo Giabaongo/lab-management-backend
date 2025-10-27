@@ -1,5 +1,9 @@
 ﻿using System.Text;
-using LabManagement.BLL.Services;
+using LabManagement.BLL.Implementations;
+using LabManagement.BLL.Interfaces;
+using LabManagement.BLL.Mappings;
+using LabManagement.DAL.Interfaces;
+using LabManagement.DAL.Implementations;
 using LabManagement.DAL.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +22,22 @@ namespace LabManagement.API
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             
+            // Add unit of work / repositories
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
+            // Add services
+            builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
-           
+            builder.Services.AddScoped<ILabService, LabService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<ILabZoneService, LabZoneService>();
+            builder.Services.AddScoped<IActivityTypeService, ActivityTypeService>();
+            builder.Services.AddScoped<ILabEventService, LabEventService>();
+            builder.Services.AddScoped<ISecurityLogService, SecurityLogService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddAutoMapper(typeof(UserProfile), typeof(LabProfile), typeof(BookingProfile), typeof(LabZoneProfile), typeof(ActivityTypeProfile), typeof(LabEventProfile), typeof(SecurityLogProfile), typeof(NotificationProfile));
+          
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {
@@ -92,6 +109,10 @@ namespace LabManagement.API
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
+            
+            // Add Global Exception Handling Middleware (MUST be first)
+            app.UseMiddleware<LabManagement.API.Middleware.ExceptionMiddleware>();
+            
             // if (app.Environment.IsDevelopment())
             // {
             //     app.UseSwagger();

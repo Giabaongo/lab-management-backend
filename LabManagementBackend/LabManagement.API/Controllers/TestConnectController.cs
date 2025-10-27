@@ -2,14 +2,26 @@
 
 namespace LabManagement.API.Controllers
 {
-    [Route("api/[controller]")]
+    /// <summary>
+    /// Health check endpoint
+    /// </summary>
+    [Route("api/health")]
     [ApiController]
     public class TestConnectController : ControllerBase
     {
+        /// <summary>
+        /// Check API health status
+        /// </summary>
+        /// <returns>API status message</returns>
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult GetHealthStatus()
         {
-            return Ok("API is running");
+            return Ok(new 
+            { 
+                status = "healthy",
+                message = "API is running",
+                timestamp = DateTime.UtcNow
+            });
         }
     }
 }

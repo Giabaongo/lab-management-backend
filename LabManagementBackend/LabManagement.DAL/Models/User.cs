@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LabManagement.Common.Constants;
 
 namespace LabManagement.DAL.Models;
 
@@ -13,9 +14,11 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public decimal Role { get; set; }
+    public int Role { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();
 

@@ -23,9 +23,11 @@ public partial class LabEvent
 
     public DateTime EndTime { get; set; }
 
-    public string Status { get; set; } = null!;
+    public int Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public byte[] RowVersion { get; set; } = null!;
 
     public virtual ActivityType ActivityType { get; set; } = null!;
 

@@ -1,10 +1,14 @@
 ﻿using LabManagement.BLL.DTOs;
-using LabManagement.BLL.Services;
+using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
 {
-    [Route("api/[controller]")]
+    /// <summary>
+    /// Authentication endpoints
+    /// </summary>
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -15,14 +19,19 @@ namespace LabManagement.API.Controllers
             _authService = authService;
         }
 
+        /// <summary>
+        /// Login with email and password
+        /// </summary>
+        /// <param name="loginDto">Login credentials</param>
+        /// <returns>JWT token and user info</returns>
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO loginDto)
+        public async Task<ActionResult<ApiResponse<AuthResponseDTO>>> Login([FromBody] LoginDTO loginDto)
         {
+            // Exceptions are thrown by AuthService and caught by ExceptionMiddleware
             var result = await _authService.Login(loginDto);
-            if (result == null)
-                return Unauthorized("Invalid credentials");
-
-            return Ok(result);
+            
+            return Ok(ApiResponse<AuthResponseDTO>.SuccessResponse(result, "Login successful"));
         }
     }
 }
+
