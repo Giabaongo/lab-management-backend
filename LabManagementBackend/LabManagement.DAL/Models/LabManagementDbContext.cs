@@ -37,20 +37,9 @@ public partial class LabManagementDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    private string? GetConnectionString()
-    {
-        IConfiguration config = new ConfigurationBuilder()
-             .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-        var strConn = config["ConnectionStrings:DefaultConnection"];
-
-        return strConn;
-    }
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer(GetConnectionString());
-    }
+    // REMOVED: GetConnectionString() và OnConfiguring()
+    // Connection string giờ được inject từ Program.cs qua DI
+    // Điều này cho phép đọc từ Environment Variables (Render) thay vì chỉ appsettings.json
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
