@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using LabManagement.Common.Constants;
 
 namespace LabManagement.DAL.Models;
 
@@ -27,8 +26,6 @@ public partial class User
     public virtual ICollection<Lab> Labs { get; set; } = new List<Lab>();
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-
-    public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
     public virtual ICollection<SecurityLog> SecurityLogs { get; set; } = new List<SecurityLog>();
 }
