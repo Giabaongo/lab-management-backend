@@ -39,6 +39,7 @@ namespace LabManagement.API
             // Add services
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILabService, LabService>();
             builder.Services.AddScoped<IBookingService, BookingService>();
