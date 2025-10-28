@@ -1,15 +1,11 @@
-﻿using LabManagement.Common.Constants;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace LabManagement.DAL.Models;
 
 public partial class LabManagementDbContext : DbContext
 {
-    public LabManagementDbContext()
-    {
-    }
-
     public LabManagementDbContext(DbContextOptions<LabManagementDbContext> options)
         : base(options)
     {
@@ -37,10 +33,6 @@ public partial class LabManagementDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    // REMOVED: GetConnectionString() và OnConfiguring()
-    // Connection string giờ được inject từ Program.cs qua DI
-    // Điều này cho phép đọc từ Environment Variables (Render) thay vì chỉ appsettings.json
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ActivityType>(entity =>
@@ -51,22 +43,12 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ActivityTypeId).HasColumnName("activity_type_id");
             entity.Property(e => e.Description)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("name");
-
-            // Seed data for ActivityTypes
-            entity.HasData(
-                new ActivityType { ActivityTypeId = 1, Name = "Workshop", Description = "Hands-on training session" },
-                new ActivityType { ActivityTypeId = 2, Name = "Seminar", Description = "Educational seminar or lecture" },
-                new ActivityType { ActivityTypeId = 3, Name = "Research", Description = "Research activity" },
-                new ActivityType { ActivityTypeId = 4, Name = "Experiment", Description = "Laboratory experiment" },
-                new ActivityType { ActivityTypeId = 5, Name = "Meeting", Description = "Group meeting or discussion" }
-            );
         });
 
         modelBuilder.Entity<Booking>(entity =>
@@ -75,17 +57,22 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("bookings");
 
+            entity.HasIndex(e => e.LabId, "IX_bookings_lab_id");
+
+            entity.HasIndex(e => e.UserId, "IX_bookings_user_id");
+
+            entity.HasIndex(e => e.ZoneId, "IX_bookings_zone_id");
+
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
             entity.Property(e => e.CreatedAt)
+                .HasPrecision(3)
                 .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnType("datetime2(3)")
                 .HasColumnName("created_at");
             entity.Property(e => e.EndTime)
-                .HasColumnType("datetime2(3)")
+                .HasPrecision(3)
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Notes)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("notes");
             entity.Property(e => e.RowVersion)
@@ -93,10 +80,9 @@ public partial class LabManagementDbContext : DbContext
                 .IsConcurrencyToken()
                 .HasColumnName("row_version");
             entity.Property(e => e.StartTime)
-                .HasColumnType("datetime2(3)")
+                .HasPrecision(3)
                 .HasColumnName("start_time");
-            entity.Property(e => e.Status)
-                .HasColumnName("status");
+            entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
 
@@ -122,6 +108,8 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("equipment");
 
+            entity.HasIndex(e => e.LabId, "IX_equipment_lab_id");
+
             entity.HasIndex(e => e.Code, "UQ__equipmen__357D4CF958F5304E").IsUnique();
 
             entity.Property(e => e.EquipmentId).HasColumnName("equipment_id");
@@ -130,7 +118,6 @@ public partial class LabManagementDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("code");
             entity.Property(e => e.Description)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
@@ -138,21 +125,12 @@ public partial class LabManagementDbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("name");
-            entity.Property(e => e.Status)
-                .HasColumnName("status");
+            entity.Property(e => e.Status).HasColumnName("status");
 
             entity.HasOne(d => d.Lab).WithMany(p => p.Equipment)
                 .HasForeignKey(d => d.LabId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__equipment__lab_i__7849DB76");
-
-            // Seed data for Equipment
-            entity.HasData(
-                new Equipment { EquipmentId = 1, LabId = 1, Name = "Microscope", Code = "EQ-001", Description = "Digital microscope with 1000x magnification", Status = 1 },
-                new Equipment { EquipmentId = 2, LabId = 1, Name = "Centrifuge", Code = "EQ-002", Description = "High-speed centrifuge", Status = 1 },
-                new Equipment { EquipmentId = 3, LabId = 2, Name = "Computer Station", Code = "EQ-003", Description = "Workstation with development tools", Status = 1 },
-                new Equipment { EquipmentId = 4, LabId = 2, Name = "Server Rack", Code = "EQ-004", Description = "Network server infrastructure", Status = 1 }
-            );
         });
 
         modelBuilder.Entity<EventParticipant>(entity =>
@@ -161,10 +139,11 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("event_participants");
 
+            entity.HasIndex(e => e.UserId, "IX_event_participants_user_id");
+
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.Role)
-                .HasColumnName("role");
+            entity.Property(e => e.Role).HasColumnName("role");
 
             entity.HasOne(d => d.Event).WithMany(p => p.EventParticipants)
                 .HasForeignKey(d => d.EventId)
@@ -183,9 +162,10 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("labs");
 
+            entity.HasIndex(e => e.ManagerId, "IX_labs_manager_id");
+
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Description)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.Location)
@@ -202,13 +182,6 @@ public partial class LabManagementDbContext : DbContext
                 .HasForeignKey(d => d.ManagerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__labs__manager_id__6FB49575");
-
-            // Seed data for Labs
-            entity.HasData(
-                new Lab { LabId = 1, Name = "Biology Lab", ManagerId = 2, Location = "Building A - Floor 2", Description = "Laboratory for biology experiments and research" },
-                new Lab { LabId = 2, Name = "Computer Lab", ManagerId = 2, Location = "Building B - Floor 3", Description = "Computer lab with 30 workstations" },
-                new Lab { LabId = 3, Name = "Chemistry Lab", ManagerId = 3, Location = "Building A - Floor 1", Description = "Chemistry laboratory with safety equipment" }
-            );
         });
 
         modelBuilder.Entity<LabEvent>(entity =>
@@ -217,18 +190,25 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("lab_events");
 
+            entity.HasIndex(e => e.ActivityTypeId, "IX_lab_events_activity_type_id");
+
+            entity.HasIndex(e => e.LabId, "IX_lab_events_lab_id");
+
+            entity.HasIndex(e => e.OrganizerId, "IX_lab_events_organizer_id");
+
+            entity.HasIndex(e => e.ZoneId, "IX_lab_events_zone_id");
+
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.ActivityTypeId).HasColumnName("activity_type_id");
             entity.Property(e => e.CreatedAt)
+                .HasPrecision(3)
                 .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnType("datetime2(3)")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.EndTime)
-                .HasColumnType("datetime2(3)")
+                .HasPrecision(3)
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.OrganizerId).HasColumnName("organizer_id");
@@ -237,10 +217,9 @@ public partial class LabManagementDbContext : DbContext
                 .IsConcurrencyToken()
                 .HasColumnName("row_version");
             entity.Property(e => e.StartTime)
-                .HasColumnType("datetime2(3)")
+                .HasPrecision(3)
                 .HasColumnName("start_time");
-            entity.Property(e => e.Status)
-                .HasColumnName("status");
+            entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.Title)
                 .HasMaxLength(200)
                 .IsUnicode(false)
@@ -274,9 +253,10 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("lab_zones");
 
+            entity.HasIndex(e => e.LabId, "IX_lab_zones_lab_id");
+
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
             entity.Property(e => e.Description)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
@@ -289,15 +269,6 @@ public partial class LabManagementDbContext : DbContext
                 .HasForeignKey(d => d.LabId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__lab_zones__lab_i__72910220");
-
-            // Seed data for LabZones
-            entity.HasData(
-                new LabZone { ZoneId = 1, LabId = 1, Name = "Zone A", Description = "Main experiment area" },
-                new LabZone { ZoneId = 2, LabId = 1, Name = "Zone B", Description = "Storage and preparation area" },
-                new LabZone { ZoneId = 3, LabId = 2, Name = "Zone A", Description = "Development stations" },
-                new LabZone { ZoneId = 4, LabId = 2, Name = "Zone B", Description = "Server room" },
-                new LabZone { ZoneId = 5, LabId = 3, Name = "Zone A", Description = "Chemical storage" }
-            );
         });
 
         modelBuilder.Entity<Notification>(entity =>
@@ -306,19 +277,20 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("notifications");
 
+            entity.HasIndex(e => e.EventId, "IX_notifications_event_id");
+
+            entity.HasIndex(e => e.RecipientId, "IX_notifications_recipient_id");
+
             entity.Property(e => e.NotificationId).HasColumnName("notification_id");
             entity.Property(e => e.EventId).HasColumnName("event_id");
-            entity.Property(e => e.IsRead)
-                .HasDefaultValue(false)
-                .HasColumnName("is_read");
+            entity.Property(e => e.IsRead).HasColumnName("is_read");
             entity.Property(e => e.Message)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("message");
             entity.Property(e => e.RecipientId).HasColumnName("recipient_id");
             entity.Property(e => e.SentAt)
+                .HasPrecision(3)
                 .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnType("datetime2(3)")
                 .HasColumnName("sent_at");
 
             entity.HasOne(d => d.Event).WithMany(p => p.Notifications)
@@ -338,27 +310,31 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("reports");
 
+            entity.HasIndex(e => e.LabId, "IX_reports_lab_id");
+
+            entity.HasIndex(e => e.UserId, "IX_reports_user_id");
+
+            entity.HasIndex(e => e.ZoneId, "IX_reports_zone_id");
+
             entity.Property(e => e.ReportId).HasColumnName("report_id");
             entity.Property(e => e.Content)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("content");
             entity.Property(e => e.GeneratedAt)
+                .HasPrecision(3)
                 .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnType("datetime2(3)")
                 .HasColumnName("generated_at");
-            entity.Property(e => e.GeneratedBy).HasColumnName("generated_by");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
+            entity.Property(e => e.PhotoUrl)
+                .HasMaxLength(1000)
+                .IsUnicode(false)
+                .HasColumnName("photo_url");
             entity.Property(e => e.ReportType)
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("report_type");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
-
-            entity.HasOne(d => d.GeneratedByNavigation).WithMany(p => p.Reports)
-                .HasForeignKey(d => d.GeneratedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__reports__generat__16CE6296");
 
             entity.HasOne(d => d.Lab).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.LabId)
@@ -375,12 +351,18 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("security_logs");
 
+            entity.HasIndex(e => e.EventId, "IX_security_logs_event_id");
+
+            entity.HasIndex(e => e.SecurityId, "IX_security_logs_security_id");
+
             entity.Property(e => e.LogId).HasColumnName("log_id");
-            entity.Property(e => e.ActionType)
-                .HasColumnName("action_type");
+            entity.Property(e => e.ActionType).HasColumnName("action_type");
             entity.Property(e => e.EventId).HasColumnName("event_id");
+            entity.Property(e => e.LoggedAt)
+                .HasPrecision(3)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnName("logged_at");
             entity.Property(e => e.Notes)
-                .HasMaxLength(-1)
                 .IsUnicode(false)
                 .HasColumnName("notes");
             entity.Property(e => e.PhotoUrl)
@@ -392,10 +374,6 @@ public partial class LabManagementDbContext : DbContext
                 .IsConcurrencyToken()
                 .HasColumnName("row_version");
             entity.Property(e => e.SecurityId).HasColumnName("security_id");
-            entity.Property(e => e.LoggedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnType("datetime2(3)")
-                .HasColumnName("logged_at");
 
             entity.HasOne(d => d.Event).WithMany(p => p.SecurityLogs)
                 .HasForeignKey(d => d.EventId)
@@ -418,8 +396,8 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreatedAt)
+                .HasPrecision(3)
                 .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnType("datetime2(3)")
                 .HasColumnName("created_at");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
@@ -433,18 +411,7 @@ public partial class LabManagementDbContext : DbContext
                 .HasMaxLength(128)
                 .IsUnicode(false)
                 .HasColumnName("password_hash");
-            entity.Property(e => e.Role)
-                .HasColumnName("role");
-
-            // Seed data for Users
-            // Note: In production, use proper password hashing (e.g., BCrypt)
-            entity.HasData(
-                new User { UserId = 1, Name = "Admin User", Email = "admin@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.Admin, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 2, Name = "School Manager", Email = "schoolmanager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.SchoolManager, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 3, Name = "Lab Manager", Email = "manager@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.LabManager, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 4, Name = "Security Staff", Email = "security@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.SecurityLab, CreatedAt = new DateTime(2025, 1, 1) },
-                new User { UserId = 5, Name = "Member", Email = "member@lab.com", PasswordHash = "$2y$10$hHPvRxU0fb3iOGs2z2VeEuEZ0UTfBS/L6LINEkQ5uElUYJXpbSFsC", Role = (int)Constant.UserRole.Member, CreatedAt = new DateTime(2025, 1, 1) }
-            );
+            entity.Property(e => e.Role).HasColumnName("role");
         });
 
         OnModelCreatingPartial(modelBuilder);
