@@ -14,6 +14,7 @@ namespace LabManagement.DAL.Interfaces
         ISecurityLogRepository SecurityLogs { get; }
         IEquipmentRepository Equipment { get; }
         INotificationRepository Notifications { get; }
+        IReportRepository Reports { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
         

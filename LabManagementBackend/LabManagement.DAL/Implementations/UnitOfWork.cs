@@ -17,6 +17,7 @@ namespace LabManagement.DAL.Implementations
         private ISecurityLogRepository? _securityLogRepository;
         private IEquipmentRepository? _equipmentRepository;
         private INotificationRepository? _notificationRepository;
+        private IReportRepository? _reportRepository;
 
         public UnitOfWork(LabManagementDbContext context)
         {
@@ -39,6 +40,8 @@ namespace LabManagement.DAL.Implementations
         public IEquipmentRepository Equipment => _equipmentRepository ??= new EquipmentRepository(_context);
 
         public INotificationRepository Notifications => _notificationRepository ??= new NotificationRepository(_context);
+
+        public IReportRepository Reports => _reportRepository ??= new ReportRepository(_context);
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
