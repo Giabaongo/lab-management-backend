@@ -39,6 +39,7 @@ namespace LabManagement.API
             // Add services
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILabService, LabService>();
             builder.Services.AddScoped<IBookingService, BookingService>();
@@ -47,7 +48,8 @@ namespace LabManagement.API
             builder.Services.AddScoped<ILabEventService, LabEventService>();
             builder.Services.AddScoped<ISecurityLogService, SecurityLogService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
-            builder.Services.AddAutoMapper(typeof(UserProfile), typeof(LabProfile), typeof(BookingProfile), typeof(LabZoneProfile), typeof(ActivityTypeProfile), typeof(LabEventProfile), typeof(SecurityLogProfile), typeof(NotificationProfile));
+            builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddAutoMapper(typeof(UserProfile), typeof(LabProfile), typeof(BookingProfile), typeof(LabZoneProfile), typeof(ActivityTypeProfile), typeof(LabEventProfile), typeof(SecurityLogProfile), typeof(NotificationProfile), typeof(ReportProfile));
           
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
