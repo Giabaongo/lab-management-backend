@@ -67,7 +67,11 @@ namespace LabManagement.BLL.Implementations
 
             return new AuthResponseDTO
             {
-                Token = new JwtSecurityTokenHandler().WriteToken(token)
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                UserId = user.UserId,
+                Email = user.Email,
+                Name = user.Name,
+                Role = user.Role
             };
         }
     }
