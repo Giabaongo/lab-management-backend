@@ -43,7 +43,7 @@ public class ReportController : ControllerBase
     /// Create a new report
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+    //[Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
     public async Task<ActionResult<ApiResponse<ReportDTO>>> CreateReport([FromBody] CreateReportDTO createReportDto)
     {
         var report = await _reportService.CreateReportAsync(createReportDto);
@@ -55,7 +55,7 @@ public class ReportController : ControllerBase
     /// Update an existing report
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+    //[Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
     public async Task<ActionResult<ApiResponse<ReportDTO>>> UpdateReport(int id, [FromBody] UpdateReportDTO updateReportDto)
     {
         var report = await _reportService.UpdateReportAsync(id, updateReportDto);
