@@ -12,7 +12,7 @@ namespace LabManagement.API.Controllers
     /// Equipment management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/equipments")] // Changed to plural
     public class EquipmentController : ControllerBase
     {
         private readonly IEquipmentService _equipmentService;
@@ -31,6 +31,17 @@ namespace LabManagement.API.Controllers
         {
             var equipments = await _equipmentService.GetAllEquipmentAsync();
             return Ok(ApiResponse<IEnumerable<EquipmentDTO>>.SuccessResponse(equipments, "Equipment retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Get equipment with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<ActionResult<ApiResponse<PagedResult<EquipmentDTO>>>> GetEquipmentPaged([FromQuery] QueryParameters queryParams)
+        {
+            var equipments = await _equipmentService.GetEquipmentAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<EquipmentDTO>>.SuccessResponse(equipments, "Equipment retrieved successfully"));
         }
 
         /// <summary>

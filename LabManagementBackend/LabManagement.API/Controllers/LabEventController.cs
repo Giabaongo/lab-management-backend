@@ -34,6 +34,17 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
+        /// Get lab events with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<LabEventDTO>>>> GetLabEventsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var labEvents = await _labEventService.GetLabEventsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<LabEventDTO>>.SuccessResponse(labEvents, "Lab events retrieved successfully"));
+        }
+
+        /// <summary>
         /// Get lab event by ID
         /// </summary>
         /// <param name="id">Lab Event ID</param>

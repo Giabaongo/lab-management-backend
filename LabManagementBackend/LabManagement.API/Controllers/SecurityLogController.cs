@@ -34,6 +34,17 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
+        /// Get security logs with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<SecurityLogDTO>>>> GetSecurityLogsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var securityLogs = await _securityLogService.GetSecurityLogsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<SecurityLogDTO>>.SuccessResponse(securityLogs, "Security logs retrieved successfully"));
+        }
+
+        /// <summary>
         /// Get security log by ID
         /// </summary>
         /// <param name="id">Security Log ID</param>
