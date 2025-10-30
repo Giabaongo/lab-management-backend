@@ -1,8 +1,11 @@
 using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Extensions;
+using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -23,6 +26,48 @@ namespace LabManagement.BLL.Implementations
         {
             var users = await _unitOfWork.Users.GetAllAsync();
             return _mapper.Map<IEnumerable<UserDTO>>(users);
+        }
+
+        public async Task<PagedResult<UserDTO>> GetUsersAsync(QueryParameters queryParams)
+        {
+            var query = _unitOfWork.Users.GetUsersQueryable();
+
+            // Search
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+            {
+                var searchTerm = queryParams.SearchTerm.ToLower();
+                query = query.Where(u =>
+                    u.Name.ToLower().Contains(searchTerm) ||
+                    u.Email.ToLower().Contains(searchTerm));
+            }
+
+            // Sort
+            if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
+            {
+                query = queryParams.SortBy.ToLower() switch
+                {
+                    "name" => queryParams.IsDescending ? query.OrderByDescending(u => u.Name) : query.OrderBy(u => u.Name),
+                    "email" => queryParams.IsDescending ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email),
+                    "role" => queryParams.IsDescending ? query.OrderByDescending(u => u.Role) : query.OrderBy(u => u.Role),
+                    "createdat" => queryParams.IsDescending ? query.OrderByDescending(u => u.CreatedAt) : query.OrderBy(u => u.CreatedAt),
+                    _ => query.OrderBy(u => u.UserId)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(u => u.UserId);
+            }
+
+            // Pagination
+            var pagedUsers = await query.ToPagedResultAsync(queryParams.PageNumber, queryParams.PageSize);
+
+            return new PagedResult<UserDTO>
+            {
+                Items = _mapper.Map<IEnumerable<UserDTO>>(pagedUsers.Items),
+                PageNumber = pagedUsers.PageNumber,
+                PageSize = pagedUsers.PageSize,
+                TotalCount = pagedUsers.TotalCount
+            };
         }
 
         public async Task<UserDTO?> GetUserByIdAsync(int id)

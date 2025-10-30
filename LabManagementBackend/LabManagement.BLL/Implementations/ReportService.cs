@@ -2,8 +2,12 @@ using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Exceptions;
+using LabManagement.Common.Extensions;
+using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LabManagement.BLL.Implementations;
 
@@ -22,6 +26,49 @@ public class ReportService : IReportService
     {
         var reports = await _unitOfWork.Reports.GetAllAsync();
         return _mapper.Map<IEnumerable<ReportDTO>>(reports);
+    }
+
+    public async Task<PagedResult<ReportDTO>> GetReportsAsync(QueryParameters queryParams)
+    {
+        var query = _unitOfWork.Reports.GetReportsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+        {
+            var term = queryParams.SearchTerm.ToLower();
+            query = query.Where(r =>
+                r.ReportType.ToLower().Contains(term) ||
+                (r.Content != null && r.Content.ToLower().Contains(term)) ||
+                (r.PhotoUrl != null && r.PhotoUrl.ToLower().Contains(term)) ||
+                (r.Lab != null && r.Lab.Name.ToLower().Contains(term)) ||
+                (r.Zone != null && r.Zone.Name.ToLower().Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
+        {
+            query = queryParams.SortBy.ToLower() switch
+            {
+                "reporttype" => queryParams.IsDescending ? query.OrderByDescending(r => r.ReportType) : query.OrderBy(r => r.ReportType),
+                "generatedat" => queryParams.IsDescending ? query.OrderByDescending(r => r.GeneratedAt) : query.OrderBy(r => r.GeneratedAt),
+                "labid" => queryParams.IsDescending ? query.OrderByDescending(r => r.LabId) : query.OrderBy(r => r.LabId),
+                "zoneid" => queryParams.IsDescending ? query.OrderByDescending(r => r.ZoneId) : query.OrderBy(r => r.ZoneId),
+                "userid" => queryParams.IsDescending ? query.OrderByDescending(r => r.UserId) : query.OrderBy(r => r.UserId),
+                _ => query.OrderBy(r => r.ReportId)
+            };
+        }
+        else
+        {
+            query = query.OrderBy(r => r.ReportId);
+        }
+
+        var pagedReports = await query.ToPagedResultAsync(queryParams.PageNumber, queryParams.PageSize);
+
+        return new PagedResult<ReportDTO>
+        {
+            Items = _mapper.Map<IEnumerable<ReportDTO>>(pagedReports.Items),
+            PageNumber = pagedReports.PageNumber,
+            PageSize = pagedReports.PageSize,
+            TotalCount = pagedReports.TotalCount
+        };
     }
 
     public async Task<ReportDTO?> GetReportByIdAsync(int id)

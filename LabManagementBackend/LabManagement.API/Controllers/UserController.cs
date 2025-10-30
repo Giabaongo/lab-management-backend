@@ -24,15 +24,31 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
-        /// Get all users (Admin and SchoolManager only)
+        /// Get all users - Simple list without pagination (Legacy endpoint)
         /// </summary>
-        /// <returns>List of users</returns>
+        /// <returns>List of all users</returns>
         [HttpGet]
         [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserDTO>>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
             return Ok(ApiResponse<IEnumerable<UserDTO>>.SuccessResponse(users, "Users retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Get users with search, sort, and pagination (Admin and SchoolManager only)
+        /// </summary>
+        /// <param name="queryParams">Query parameters for search, sort, and pagination</param>
+        /// <returns>Paginated list of users</returns>
+        /// <remarks>
+        /// Example: GET /api/users/paged?searchTerm=john&amp;sortBy=name&amp;sortOrder=desc&amp;pageNumber=1&amp;pageSize=20
+        /// </remarks>
+        [HttpGet("paged")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<ActionResult<ApiResponse<PagedResult<UserDTO>>>> GetUsersPaged([FromQuery] QueryParameters queryParams)
+        {
+            var pagedUsers = await _userService.GetUsersAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<UserDTO>>.SuccessResponse(pagedUsers, "Users retrieved successfully"));
         }
 
         /// <summary>

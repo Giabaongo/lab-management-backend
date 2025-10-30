@@ -1,10 +1,12 @@
 using LabManagement.BLL.DTOs;
+using LabManagement.Common.Models;
 
 namespace LabManagement.BLL.Interfaces
 {
     public interface IUserService
     {
         Task<IEnumerable<UserDTO>> GetAllUsersAsync();
+        Task<PagedResult<UserDTO>> GetUsersAsync(QueryParameters queryParams);
         Task<UserDTO?> GetUserByIdAsync(int id);
         Task<UserDTO?> GetUserByEmailAsync(string email);
         Task<UserDTO> CreateUserAsync(CreateUserDTO createUserDto);
