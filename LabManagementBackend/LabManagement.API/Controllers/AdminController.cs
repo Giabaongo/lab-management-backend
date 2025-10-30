@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
 {
+    // COMMENTED OUT - Admin-specific controller (use UserController for admin operations instead)
+    /*
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "4")]
@@ -55,4 +57,5 @@ namespace LabManagement.API.Controllers
             }
         }
     }
+    */
 }

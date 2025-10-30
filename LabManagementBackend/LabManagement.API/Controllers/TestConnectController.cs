@@ -2,6 +2,8 @@
 
 namespace LabManagement.API.Controllers
 {
+    // COMMENTED OUT - Test/Health check endpoint not needed in production
+    /*
     /// <summary>
     /// Health check endpoint
     /// </summary>
@@ -24,4 +26,5 @@ namespace LabManagement.API.Controllers
             });
         }
     }
+    */
 }
