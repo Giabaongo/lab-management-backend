@@ -35,6 +35,17 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
+        /// Get bookings with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<BookingDTO>>>> GetBookingsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var bookings = await _bookingService.GetBookingsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
+        }
+
+        /// <summary>
         /// Get booking by ID 
         /// </summary>
         /// <param name="id">Booking ID</param>

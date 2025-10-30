@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LabManagement.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/reports")] // Changed to plural
 [Authorize] // Require authentication for all endpoints
 public class ReportController : ControllerBase
 {
@@ -27,6 +27,16 @@ public class ReportController : ControllerBase
     {
         var reports = await _reportService.GetAllReportsAsync();
         return Ok(ApiResponse<IEnumerable<ReportDTO>>.SuccessResponse(reports, "Reports retrieved successfully"));
+    }
+
+    /// <summary>
+    /// Get reports with search, sort, and pagination
+    /// </summary>
+    [HttpGet("paged")]
+    public async Task<ActionResult<ApiResponse<PagedResult<ReportDTO>>>> GetReportsPaged([FromQuery] QueryParameters queryParams)
+    {
+        var reports = await _reportService.GetReportsAsync(queryParams);
+        return Ok(ApiResponse<PagedResult<ReportDTO>>.SuccessResponse(reports, "Reports retrieved successfully"));
     }
 
     /// <summary>

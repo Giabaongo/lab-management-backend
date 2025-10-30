@@ -1,15 +1,12 @@
 ﻿using LabManagement.BLL.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LabManagement.Common.Models;
 
 namespace LabManagement.BLL.Interfaces
 {
     public interface INotificationService
     {
         Task<IEnumerable<NotificationDTO>> GetAllNotificationsAsync();
+        Task<PagedResult<NotificationDTO>> GetNotificationsAsync(QueryParameters queryParams);
         Task<NotificationDTO?> GetNotificationByIdAsync(int id);
         Task<NotificationDTO> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO);
         Task<NotificationDTO?> UpdateNotificationAsync(int id, UpdateNotificationDTO updateNotificationDTO);

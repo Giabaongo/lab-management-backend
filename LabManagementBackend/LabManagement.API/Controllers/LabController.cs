@@ -38,6 +38,17 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
+        /// Get labs with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
+        public async Task<ActionResult<ApiResponse<PagedResult<LabDTO>>>> GetLabsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var labs = await _labService.GetLabsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<LabDTO>>.SuccessResponse(labs, "Labs retrieved successfully"));
+        }
+
+        /// <summary>
         /// Get Lab by ID 
         /// </summary>
         /// <param name="id">Lab ID</param>

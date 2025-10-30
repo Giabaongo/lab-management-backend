@@ -12,7 +12,7 @@ namespace LabManagement.API.Controllers
     /// Notification management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/notifications")] // Changed to plural
     [Authorize]
     public class NotificationController : ControllerBase
     {
@@ -33,6 +33,19 @@ namespace LabManagement.API.Controllers
         {
             var notifications = await _notificationService.GetAllNotificationsAsync();
             return Ok(ApiResponse<IEnumerable<NotificationDTO>>.SuccessResponse(
+                notifications,
+                "Notifications retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Get notifications with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<ActionResult<ApiResponse<PagedResult<NotificationDTO>>>> GetNotificationsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var notifications = await _notificationService.GetNotificationsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<NotificationDTO>>.SuccessResponse(
                 notifications,
                 "Notifications retrieved successfully"));
         }

@@ -1,6 +1,7 @@
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace LabManagement.DAL.Implementations;
 
@@ -8,6 +9,14 @@ public class ReportRepository : GenericRepository<Report>, IReportRepository
 {
     public ReportRepository(LabManagementDbContext context) : base(context)
     {
+    }
+
+    public IQueryable<Report> GetReportsQueryable()
+    {
+        return _context.Reports
+            .Include(r => r.Lab)
+            .Include(r => r.Zone)
+            .AsQueryable();
     }
 
     public async Task<IEnumerable<Report>> GetReportsByLabIdAsync(int labId)

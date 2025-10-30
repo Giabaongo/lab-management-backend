@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Extensions;
+using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -45,6 +45,47 @@ namespace LabManagement.BLL.Implementations
         {
             var notification = await _unitOfWork.Notifications.GetAllAsync();
             return _mapper.Map<IEnumerable<NotificationDTO>>(notification);
+        }
+
+        public async Task<PagedResult<NotificationDTO>> GetNotificationsAsync(QueryParameters queryParams)
+        {
+            var query = _unitOfWork.Notifications.GetNotificationsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+            {
+                var term = queryParams.SearchTerm.ToLower();
+                query = query.Where(n =>
+                    n.Message.ToLower().Contains(term) ||
+                    n.NotificationId.ToString().Contains(term) ||
+                    n.RecipientId.ToString().Contains(term) ||
+                    n.EventId.ToString().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
+            {
+                query = queryParams.SortBy.ToLower() switch
+                {
+                    "sentat" => queryParams.IsDescending ? query.OrderByDescending(n => n.SentAt) : query.OrderBy(n => n.SentAt),
+                    "isread" => queryParams.IsDescending ? query.OrderByDescending(n => n.IsRead) : query.OrderBy(n => n.IsRead),
+                    "recipientid" => queryParams.IsDescending ? query.OrderByDescending(n => n.RecipientId) : query.OrderBy(n => n.RecipientId),
+                    "eventid" => queryParams.IsDescending ? query.OrderByDescending(n => n.EventId) : query.OrderBy(n => n.EventId),
+                    _ => query.OrderBy(n => n.NotificationId)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(n => n.NotificationId);
+            }
+
+            var pagedNotifications = await query.ToPagedResultAsync(queryParams.PageNumber, queryParams.PageSize);
+
+            return new PagedResult<NotificationDTO>
+            {
+                Items = _mapper.Map<IEnumerable<NotificationDTO>>(pagedNotifications.Items),
+                PageNumber = pagedNotifications.PageNumber,
+                PageSize = pagedNotifications.PageSize,
+                TotalCount = pagedNotifications.TotalCount
+            };
         }
 
         public async Task<NotificationDTO?> GetNotificationByIdAsync(int id)

@@ -1,14 +1,12 @@
 ﻿using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Extensions;
+using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
-using Microsoft.Identity.Client;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -57,6 +55,46 @@ namespace LabManagement.BLL.Implementations
         {
             var equipments =  await _unitOfWork.Equipment.GetAllAsync();
             return _mapper.Map<IEnumerable<EquipmentDTO>>(equipments);
+        }
+
+        public async Task<PagedResult<EquipmentDTO>> GetEquipmentAsync(QueryParameters queryParams)
+        {
+            var query = _unitOfWork.Equipment.GetEquipmentQueryable();
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+            {
+                var term = queryParams.SearchTerm.ToLower();
+                query = query.Where(e =>
+                    e.Name.ToLower().Contains(term) ||
+                    e.Code.ToLower().Contains(term) ||
+                    (e.Description != null && e.Description.ToLower().Contains(term)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
+            {
+                query = queryParams.SortBy.ToLower() switch
+                {
+                    "name" => queryParams.IsDescending ? query.OrderByDescending(e => e.Name) : query.OrderBy(e => e.Name),
+                    "code" => queryParams.IsDescending ? query.OrderByDescending(e => e.Code) : query.OrderBy(e => e.Code),
+                    "status" => queryParams.IsDescending ? query.OrderByDescending(e => e.Status) : query.OrderBy(e => e.Status),
+                    "labid" => queryParams.IsDescending ? query.OrderByDescending(e => e.LabId) : query.OrderBy(e => e.LabId),
+                    _ => query.OrderBy(e => e.EquipmentId)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(e => e.EquipmentId);
+            }
+
+            var pagedEquipment = await query.ToPagedResultAsync(queryParams.PageNumber, queryParams.PageSize);
+
+            return new PagedResult<EquipmentDTO>
+            {
+                Items = _mapper.Map<IEnumerable<EquipmentDTO>>(pagedEquipment.Items),
+                PageNumber = pagedEquipment.PageNumber,
+                PageSize = pagedEquipment.PageSize,
+                TotalCount = pagedEquipment.TotalCount
+            };
         }
 
         public async Task<EquipmentDTO?> GetEquipmentByIdAsync(int id)

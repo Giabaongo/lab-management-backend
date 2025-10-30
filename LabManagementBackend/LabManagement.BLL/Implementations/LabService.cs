@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Extensions;
+using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -45,6 +44,45 @@ namespace LabManagement.BLL.Implementations
         {
             var labs = await _unitOfWork.Labs.GetAllAsync();
             return _mapper.Map<IEnumerable<LabDTO>>(labs);
+        }
+
+        public async Task<PagedResult<LabDTO>> GetLabsAsync(QueryParameters queryParams)
+        {
+            var query = _unitOfWork.Labs.GetLabsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+            {
+                var term = queryParams.SearchTerm.ToLower();
+                query = query.Where(l =>
+                    l.Name.ToLower().Contains(term) ||
+                    (l.Location != null && l.Location.ToLower().Contains(term)) ||
+                    (l.Description != null && l.Description.ToLower().Contains(term)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
+            {
+                query = queryParams.SortBy.ToLower() switch
+                {
+                    "name" => queryParams.IsDescending ? query.OrderByDescending(l => l.Name) : query.OrderBy(l => l.Name),
+                    "location" => queryParams.IsDescending ? query.OrderByDescending(l => l.Location) : query.OrderBy(l => l.Location),
+                    "managerid" => queryParams.IsDescending ? query.OrderByDescending(l => l.ManagerId) : query.OrderBy(l => l.ManagerId),
+                    _ => query.OrderBy(l => l.LabId)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(l => l.LabId);
+            }
+
+            var pagedLabs = await query.ToPagedResultAsync(queryParams.PageNumber, queryParams.PageSize);
+
+            return new PagedResult<LabDTO>
+            {
+                Items = _mapper.Map<IEnumerable<LabDTO>>(pagedLabs.Items),
+                PageNumber = pagedLabs.PageNumber,
+                PageSize = pagedLabs.PageSize,
+                TotalCount = pagedLabs.TotalCount
+            };
         }
 
         public async Task<LabDTO?> GetLabByIdAsync(int id)
