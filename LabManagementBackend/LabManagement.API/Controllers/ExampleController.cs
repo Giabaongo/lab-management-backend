@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
 {
+    // COMMENTED OUT - Example controller for documentation/testing purposes only
+    /*
     /// <summary>
     /// Example controller showing how to use ApiResponse and Custom Exceptions
     /// </summary>
@@ -111,4 +113,5 @@ namespace LabManagement.API.Controllers
             ));
         }
     }
+    */
 }
