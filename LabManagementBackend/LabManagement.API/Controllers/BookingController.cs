@@ -46,6 +46,20 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
+        /// Get available booking slots for a specific lab zone and date
+        /// </summary>
+        [HttpGet("available-slots")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AvailableSlotDTO>>>> GetAvailableSlots([FromQuery] AvailableSlotQueryDTO query)
+        {
+            if (!ModelState.IsValid)
+                throw new BadRequestException("Invalid slot query parameters");
+
+            var slots = await _bookingService.GetAvailableSlotsAsync(query);
+            return Ok(ApiResponse<IEnumerable<AvailableSlotDTO>>.SuccessResponse(slots, "Available slots retrieved successfully"));
+        }
+
+        /// <summary>
         /// Get booking by ID 
         /// </summary>
         /// <param name="id">Booking ID</param>

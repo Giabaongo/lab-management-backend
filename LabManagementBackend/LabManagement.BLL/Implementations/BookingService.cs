@@ -2,11 +2,14 @@ using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Extensions;
+using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -113,6 +116,51 @@ namespace LabManagement.BLL.Implementations
             await _unitOfWork.SaveChangesAsync();
             
             return _mapper.Map<BookingDTO>(booking);
+        }
+
+        public async Task<IEnumerable<AvailableSlotDTO>> GetAvailableSlotsAsync(AvailableSlotQueryDTO query)
+        {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
+            if (query.SlotDurationMinutes <= 0)
+                throw new BadRequestException("Slot duration must be greater than zero.");
+
+            if (query.DayStart < TimeSpan.Zero || query.DayStart >= TimeSpan.FromHours(24))
+                throw new BadRequestException("DayStart must be between 00:00 and 24:00.");
+
+            if (query.DayEnd <= TimeSpan.Zero || query.DayEnd > TimeSpan.FromHours(24))
+                throw new BadRequestException("DayEnd must be greater than 00:00 and not exceed 24:00.");
+
+            if (query.DayEnd <= query.DayStart)
+                throw new BadRequestException("DayEnd must be after DayStart.");
+
+            var slotDuration = TimeSpan.FromMinutes(query.SlotDurationMinutes);
+            if (slotDuration >= query.DayEnd - query.DayStart)
+                throw new BadRequestException("Slot duration must be shorter than the working window.");
+
+            var dayStart = query.Date.Date.Add(query.DayStart);
+            var dayEnd = query.Date.Date.Add(query.DayEnd);
+
+            var bookings = await _unitOfWork.Bookings.GetBookingsInRangeAsync(query.LabId, query.ZoneId, dayStart, dayEnd);
+
+            var availableSlots = new List<AvailableSlotDTO>();
+
+            for (var slotStart = dayStart; slotStart.Add(slotDuration) <= dayEnd; slotStart = slotStart.Add(slotDuration))
+            {
+                var slotEnd = slotStart.Add(slotDuration);
+                var overlaps = bookings.Any(b => slotStart < b.EndTime && slotEnd > b.StartTime);
+                if (!overlaps)
+                {
+                    availableSlots.Add(new AvailableSlotDTO
+                    {
+                        StartTime = slotStart,
+                        EndTime = slotEnd
+                    });
+                }
+            }
+
+            return availableSlots;
         }
     }
 }
