@@ -12,5 +12,6 @@ namespace LabManagement.BLL.Interfaces
         Task<BookingDTO?> UpdateBookingAsync(int id, UpdateBookingDTO updateBookingDTO);
         Task<bool> DeleteBookingAsync(int id);
         Task<bool> BookingExistsAsync(int id);
+        Task<IEnumerable<AvailableSlotDTO>> GetAvailableSlotsAsync(AvailableSlotQueryDTO query);
     }
 }
