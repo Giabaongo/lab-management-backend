@@ -1,8 +1,12 @@
 using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Extensions;
+using LabManagement.Common.Models;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -40,6 +44,52 @@ namespace LabManagement.BLL.Implementations
         {
             var bookings = await _unitOfWork.Bookings.GetAllAsync();
             return _mapper.Map<IEnumerable<BookingDTO>>(bookings);
+        }
+
+        public async Task<PagedResult<BookingDTO>> GetBookingsAsync(QueryParameters queryParams)
+        {
+            var query = _unitOfWork.Bookings.GetBookingsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+            {
+                var term = queryParams.SearchTerm.ToLower();
+                query = query.Where(b =>
+                    (b.Notes != null && b.Notes.ToLower().Contains(term)) ||
+                    b.BookingId.ToString().Contains(term) ||
+                    b.UserId.ToString().Contains(term) ||
+                    b.LabId.ToString().Contains(term) ||
+                    b.ZoneId.ToString().Contains(term) ||
+                    b.Status.ToString().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
+            {
+                query = queryParams.SortBy.ToLower() switch
+                {
+                    "starttime" => queryParams.IsDescending ? query.OrderByDescending(b => b.StartTime) : query.OrderBy(b => b.StartTime),
+                    "endtime" => queryParams.IsDescending ? query.OrderByDescending(b => b.EndTime) : query.OrderBy(b => b.EndTime),
+                    "status" => queryParams.IsDescending ? query.OrderByDescending(b => b.Status) : query.OrderBy(b => b.Status),
+                    "createdat" => queryParams.IsDescending ? query.OrderByDescending(b => b.CreatedAt) : query.OrderBy(b => b.CreatedAt),
+                    "userid" => queryParams.IsDescending ? query.OrderByDescending(b => b.UserId) : query.OrderBy(b => b.UserId),
+                    "labid" => queryParams.IsDescending ? query.OrderByDescending(b => b.LabId) : query.OrderBy(b => b.LabId),
+                    "zoneid" => queryParams.IsDescending ? query.OrderByDescending(b => b.ZoneId) : query.OrderBy(b => b.ZoneId),
+                    _ => query.OrderBy(b => b.BookingId)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(b => b.BookingId);
+            }
+
+            var pagedBookings = await query.ToPagedResultAsync(queryParams.PageNumber, queryParams.PageSize);
+
+            return new PagedResult<BookingDTO>
+            {
+                Items = _mapper.Map<IEnumerable<BookingDTO>>(pagedBookings.Items),
+                PageNumber = pagedBookings.PageNumber,
+                PageSize = pagedBookings.PageSize,
+                TotalCount = pagedBookings.TotalCount
+            };
         }
 
         public async Task<BookingDTO?> GetBookingByIdAsync(int id)

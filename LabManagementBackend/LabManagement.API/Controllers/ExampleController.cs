@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LabManagement.API.Controllers
 {
+    // COMMENTED OUT - Example controller for documentation/testing purposes only
+    /*
     /// <summary>
     /// Example controller showing how to use ApiResponse and Custom Exceptions
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/examples")]
     [Authorize]
     public class ExampleController : ControllerBase
     {
@@ -25,7 +27,7 @@ namespace LabManagement.API.Controllers
         /// <summary>
         /// Example 1: Return success response with ApiResponse wrapper
         /// </summary>
-        [HttpGet("success-example")]
+        [HttpGet("success")]
         [AllowAnonymous]
         public ActionResult<ApiResponse<string>> GetSuccessExample()
         {
@@ -35,7 +37,7 @@ namespace LabManagement.API.Controllers
         /// <summary>
         /// Example 2: Throw NotFoundException (will be caught by ExceptionMiddleware)
         /// </summary>
-        [HttpGet("not-found-example/{id}")]
+        [HttpGet("not-found/{id}")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<UserDTO>>> GetNotFoundExample(int id)
         {
@@ -53,7 +55,7 @@ namespace LabManagement.API.Controllers
         /// <summary>
         /// Example 3: Throw BadRequestException
         /// </summary>
-        [HttpPost("bad-request-example")]
+        [HttpPost("bad-request")]
         [AllowAnonymous]
         public ActionResult<ApiResponse<object>> PostBadRequestExample([FromBody] string email)
         {
@@ -69,7 +71,7 @@ namespace LabManagement.API.Controllers
         /// <summary>
         /// Example 4: Throw UnauthorizedException
         /// </summary>
-        [HttpGet("unauthorized-example")]
+        [HttpGet("unauthorized")]
         [AllowAnonymous]
         public ActionResult<ApiResponse<object>> GetUnauthorizedExample()
         {
@@ -88,7 +90,7 @@ namespace LabManagement.API.Controllers
         /// <summary>
         /// Example 5: Throw unhandled exception (will return 500)
         /// </summary>
-        [HttpGet("error-example")]
+        [HttpGet("error")]
         [AllowAnonymous]
         public ActionResult<ApiResponse<object>> GetErrorExample()
         {
@@ -101,7 +103,7 @@ namespace LabManagement.API.Controllers
         /// <summary>
         /// Example 6: Manual error response (without throwing exception)
         /// </summary>
-        [HttpGet("manual-error-example")]
+        [HttpGet("manual-error")]
         [AllowAnonymous]
         public ActionResult<ApiResponse<object>> GetManualErrorExample()
         {
@@ -111,4 +113,5 @@ namespace LabManagement.API.Controllers
             ));
         }
     }
+    */
 }

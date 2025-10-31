@@ -12,7 +12,7 @@ namespace LabManagement.API.Controllers
     /// Booking management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/bookings")]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
@@ -32,6 +32,17 @@ namespace LabManagement.API.Controllers
         {
             var bookings = await _bookingService.GetAllBookingsAsync();
             return Ok(ApiResponse<IEnumerable<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Get bookings with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<BookingDTO>>>> GetBookingsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var bookings = await _bookingService.GetBookingsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
         }
 
         /// <summary>
@@ -109,7 +120,7 @@ namespace LabManagement.API.Controllers
             if (!result)
                 throw new NotFoundException("Booking", id);
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Booking deleted successfully"));
+            return Ok(ApiResponse<object>.SuccessResponse(new { }, "Booking deleted successfully"));
         }
     }
 }

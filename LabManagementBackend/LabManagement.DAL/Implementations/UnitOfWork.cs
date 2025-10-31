@@ -11,6 +11,13 @@ namespace LabManagement.DAL.Implementations
         private IUserRepository? _userRepository;
         private ILabRepository? _labRepository;
         private IBookingRepository? _bookingRepository;
+        private ILabZoneRepository? _labZoneRepository;
+        private IActivityTypeRepository? _activityTypeRepository;
+        private ILabEventRepository? _labEventRepository;
+        private ISecurityLogRepository? _securityLogRepository;
+        private IEquipmentRepository? _equipmentRepository;
+        private INotificationRepository? _notificationRepository;
+        private IReportRepository? _reportRepository;
 
         public UnitOfWork(LabManagementDbContext context)
         {
@@ -22,6 +29,19 @@ namespace LabManagement.DAL.Implementations
         public ILabRepository Labs => _labRepository ??= new LabRepository(_context);
 
         public IBookingRepository Bookings => _bookingRepository ??= new BookingRepository(_context);
+
+        public ILabZoneRepository LabZones => _labZoneRepository ??= new LabZoneRepository(_context);
+        public IActivityTypeRepository ActivityTypes => _activityTypeRepository ??= new ActivityTypeRepository(_context);
+
+        public ILabEventRepository LabEvents => _labEventRepository ??= new LabEventRepository(_context);
+
+        public ISecurityLogRepository SecurityLogs => _securityLogRepository ??= new SecurityLogRepository(_context);
+
+        public IEquipmentRepository Equipment => _equipmentRepository ??= new EquipmentRepository(_context);
+
+        public INotificationRepository Notifications => _notificationRepository ??= new NotificationRepository(_context);
+
+        public IReportRepository Reports => _reportRepository ??= new ReportRepository(_context);
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

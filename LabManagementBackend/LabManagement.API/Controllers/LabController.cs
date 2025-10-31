@@ -12,10 +12,10 @@ using Microsoft.VisualBasic;
 namespace LabManagement.API.Controllers
 {
     /// <summary>
-    /// User management endpoints
+    /// Lab management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/labs")]
     public class LabController : ControllerBase
     {
         private readonly ILabService _labService;
@@ -30,11 +30,22 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <returns>List of labs</returns>
         [HttpGet]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<LabDTO>>>> GetAllLabs()
         {
             var labs = await _labService.GetAllLabsAsync();
             return Ok(ApiResponse<IEnumerable<LabDTO>>.SuccessResponse(labs, "Labs retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Get labs with search, sort, and pagination
+        /// </summary>
+        [HttpGet("paged")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
+        public async Task<ActionResult<ApiResponse<PagedResult<LabDTO>>>> GetLabsPaged([FromQuery] QueryParameters queryParams)
+        {
+            var labs = await _labService.GetLabsAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<LabDTO>>.SuccessResponse(labs, "Labs retrieved successfully"));
         }
 
         /// <summary>

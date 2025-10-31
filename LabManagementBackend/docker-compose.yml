@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # API Application - Kết nối đến Azure SQL Database
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: lab-management-api-prod
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Azure SQL Database - Use environment variables
+      - ConnectionStrings__DefaultConnection=Server=${DB_SERVER};Database=${DB_NAME};User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=False;Trusted_Connection=False;
+      # JWT Configuration - Use environment variables
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-LabManagementAPI}
+      - Jwt__Audience=${JWT_AUDIENCE:-LabManagementUsers}
+    restart: unless-stopped
+    networks:
+      - lab-network
+    env_file:
+      - .env
+
+networks:
+  lab-network:
+    driver: bridge

@@ -25,5 +25,10 @@ namespace LabManagement.DAL.Implementations
         {
             return await _dbSet.AnyAsync(u => u.Email == email);
         }
+
+        public IQueryable<User> GetUsersQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
     }
 }

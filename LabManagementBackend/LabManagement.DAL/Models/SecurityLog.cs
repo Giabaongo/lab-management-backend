@@ -11,13 +11,15 @@ public partial class SecurityLog
 
     public int SecurityId { get; set; }
 
-    public int Action { get; set; }
-
-    public DateTime Timestamp { get; set; }
+    public int ActionType { get; set; }
 
     public string? PhotoUrl { get; set; }
 
     public string? Notes { get; set; }
+
+    public DateTime LoggedAt { get; set; }
+
+    public byte[] RowVersion { get; set; } = null!;
 
     public virtual LabEvent Event { get; set; } = null!;
 

@@ -13,7 +13,7 @@ namespace LabManagement.API.Controllers
     /// User management endpoints
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -24,15 +24,31 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
-        /// Get all users (Admin and SchoolManager only)
+        /// Get all users - Simple list without pagination (Legacy endpoint)
         /// </summary>
-        /// <returns>List of users</returns>
+        /// <returns>List of all users</returns>
         [HttpGet]
         [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserDTO>>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
             return Ok(ApiResponse<IEnumerable<UserDTO>>.SuccessResponse(users, "Users retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Get users with search, sort, and pagination (Admin and SchoolManager only)
+        /// </summary>
+        /// <param name="queryParams">Query parameters for search, sort, and pagination</param>
+        /// <returns>Paginated list of users</returns>
+        /// <remarks>
+        /// Example: GET /api/users/paged?searchTerm=john&amp;sortBy=name&amp;sortOrder=desc&amp;pageNumber=1&amp;pageSize=20
+        /// </remarks>
+        [HttpGet("paged")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<ActionResult<ApiResponse<PagedResult<UserDTO>>>> GetUsersPaged([FromQuery] QueryParameters queryParams)
+        {
+            var pagedUsers = await _userService.GetUsersAsync(queryParams);
+            return Ok(ApiResponse<PagedResult<UserDTO>>.SuccessResponse(pagedUsers, "Users retrieved successfully"));
         }
 
         /// <summary>
@@ -53,13 +69,13 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
-        /// Get user by email
+        /// Get user by email (use query parameter: ?email=xxx)
         /// </summary>
         /// <param name="email">User email</param>
         /// <returns>User details</returns>
-        [HttpGet("email/{email}")]
+        [HttpGet("by-email")]
         [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
-        public async Task<ActionResult<ApiResponse<UserDTO>>> GetUserByEmail(string email)
+        public async Task<ActionResult<ApiResponse<UserDTO>>> GetUserByEmail([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new BadRequestException("Email cannot be empty");
@@ -152,38 +168,60 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
-        /// Check if user exists
+        /// Update user role by ID (Admin only)
         /// </summary>
         /// <param name="id">User ID</param>
-        /// <returns>Boolean result</returns>
-        [HttpGet("{id}/exists")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
-        public async Task<ActionResult<ApiResponse<object>>> UserExists(int id)
+        /// <param name="updateUserDto">User update data containing new role</param>
+        /// <returns>Updated user</returns>
+        [HttpPut("{id}/role")]
+        [Authorize(Roles = nameof(Constant.UserRole.Admin))]
+        public async Task<ActionResult<ApiResponse<UserDTO>>> UpdateUserRole(int id, [FromBody] UpdateUserDTO updateUserDto)
         {
-            var exists = await _userService.UserExistsAsync(id);
-            return Ok(ApiResponse<object>.SuccessResponse(
-                new { userId = id, exists }, 
-                exists ? "User exists" : "User does not exist"
-            ));
+            if (!ModelState.IsValid)
+                throw new BadRequestException("Invalid user data");
+
+            if (updateUserDto.Role == null)
+                throw new BadRequestException("Role is required");
+
+            // Check if user exists
+            if (!await _userService.UserExistsAsync(id))
+                throw new NotFoundException("User", id);
+
+            var user = await _userService.UpdateUserAsync(id, updateUserDto);
+            
+            if (user == null)
+                throw new NotFoundException("User", id);
+
+            return Ok(ApiResponse<UserDTO>.SuccessResponse(user, "User role updated successfully"));
         }
 
         /// <summary>
-        /// Check if email exists
+        /// Check if user exists by ID (use HEAD request for better practice)
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <returns>Boolean result</returns>
+        [HttpHead("{id}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<IActionResult> CheckUserExists(int id)
+        {
+            var exists = await _userService.UserExistsAsync(id);
+            return exists ? Ok() : NotFound();
+        }
+
+        /// <summary>
+        /// Check if email exists (use query parameter: ?email=xxx)
         /// </summary>
         /// <param name="email">Email address</param>
         /// <returns>Boolean result</returns>
-        [HttpGet("email/{email}/exists")]
+        [HttpHead("check-email")]
         [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
-        public async Task<ActionResult<ApiResponse<object>>> EmailExists(string email)
+        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                throw new BadRequestException("Email cannot be empty");
+                return BadRequest();
 
             var exists = await _userService.EmailExistsAsync(email);
-            return Ok(ApiResponse<object>.SuccessResponse(
-                new { email, exists }, 
-                exists ? "Email exists" : "Email does not exist"
-            ));
+            return exists ? Ok() : NotFound();
         }
     }
 }
