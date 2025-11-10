@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 
 namespace LabManagement.API
 {
@@ -32,11 +33,15 @@ namespace LabManagement.API
             // Add DbContext
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(connString));
-            
+
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+                    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("UptashRedis")));
+
             // Add unit of work / repositories
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Add services
+            builder.Services.AddScoped<IRedisHelper, RedisHelper>();
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
