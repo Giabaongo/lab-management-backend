@@ -19,6 +19,9 @@ namespace LabManagement.BLL.DTOs
         public int managerId { get; set; }
 
         [Required]
+        public int departmentId { get; set; }
+
+        [Required]
         [StringLength(100)]
         public string description { get; set; } = null!;
 

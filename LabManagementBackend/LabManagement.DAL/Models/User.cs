@@ -28,4 +28,6 @@ public partial class User
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual ICollection<SecurityLog> SecurityLogs { get; set; } = new List<SecurityLog>();
+
+    public virtual ICollection<UserDepartment> UserDepartments { get; set; } = new List<UserDepartment>();
 }

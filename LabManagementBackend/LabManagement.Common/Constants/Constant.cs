@@ -2,6 +2,8 @@
 {
     public static class Constant
     {
+        public const int MaxDepartmentsPerMember = 2;
+
         public enum UserRole
         {
             Admin = 0,
