@@ -26,7 +26,7 @@ namespace LabManagement.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult> GetAllEquipment()
         {
             var equipments = await _equipmentService.GetAllEquipmentAsync();
@@ -37,7 +37,7 @@ namespace LabManagement.API.Controllers
         /// Get equipment with search, sort, and pagination
         /// </summary>
         [HttpGet("paged")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<PagedResult<EquipmentDTO>>>> GetEquipmentPaged([FromQuery] QueryParameters queryParams)
         {
             var equipments = await _equipmentService.GetEquipmentAsync(queryParams);
@@ -49,7 +49,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <returns>Equipment data</returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)}")]
         public async Task<ActionResult> GetEquipmentById(int id)
         {
             var equipment = await _equipmentService.GetEquipmentByIdAsync(id);

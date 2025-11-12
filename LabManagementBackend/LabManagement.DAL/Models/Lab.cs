@@ -9,6 +9,8 @@ public partial class Lab
 
     public string Name { get; set; } = null!;
 
+    public int DepartmentId { get; set; }
+
     public int ManagerId { get; set; }
 
     public string? Location { get; set; }
@@ -26,4 +28,6 @@ public partial class Lab
     public virtual User Manager { get; set; } = null!;
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
+
+    public virtual Department Department { get; set; } = null!;
 }
