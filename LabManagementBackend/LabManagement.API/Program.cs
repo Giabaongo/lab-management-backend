@@ -60,6 +60,8 @@ namespace LabManagement.API
             }
 
             // Add services to the container.
+            builder.Services.AddMemoryCache();
+            builder.Services.AddHttpClient();
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
