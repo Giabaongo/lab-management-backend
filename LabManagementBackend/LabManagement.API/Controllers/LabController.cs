@@ -1,13 +1,13 @@
-﻿using LabManagement.BLL.DTOs;
+﻿using System;
+using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Implementations;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Constants;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
+using System.Security.Claims;
 
 namespace LabManagement.API.Controllers
 {
@@ -25,6 +25,29 @@ namespace LabManagement.API.Controllers
             _labService = labService;
         }
 
+        private (int userId, Constant.UserRole role) GetRequesterContext()
+        {
+            var userIdClaim = User.FindFirst("UserId") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirst(ClaimTypes.Role) ?? User.FindFirst("Role");
+
+            if (userIdClaim == null || roleClaim == null)
+            {
+                throw new UnauthorizedException("Missing authentication context");
+            }
+
+            if (!int.TryParse(userIdClaim.Value, out var userId))
+            {
+                throw new UnauthorizedException("Invalid user identifier");
+            }
+
+            if (!Enum.TryParse(roleClaim.Value, out Constant.UserRole role))
+            {
+                throw new UnauthorizedException("Invalid user role");
+            }
+
+            return (userId, role);
+        }
+
         /// <summary>
         /// Get all Labs(Admin and School manager only)
         /// </summary>
@@ -33,7 +56,8 @@ namespace LabManagement.API.Controllers
         [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<LabDTO>>>> GetAllLabs()
         {
-            var labs = await _labService.GetAllLabsAsync();
+            var (userId, role) = GetRequesterContext();
+            var labs = await _labService.GetAllLabsAsync(userId, role);
             return Ok(ApiResponse<IEnumerable<LabDTO>>.SuccessResponse(labs, "Labs retrieved successfully"));
         }
 
@@ -44,7 +68,8 @@ namespace LabManagement.API.Controllers
         [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<PagedResult<LabDTO>>>> GetLabsPaged([FromQuery] QueryParameters queryParams)
         {
-            var labs = await _labService.GetLabsAsync(queryParams);
+            var (userId, role) = GetRequesterContext();
+            var labs = await _labService.GetLabsAsync(queryParams, userId, role);
             return Ok(ApiResponse<PagedResult<LabDTO>>.SuccessResponse(labs, "Labs retrieved successfully"));
         }
 
@@ -78,10 +103,10 @@ namespace LabManagement.API.Controllers
         {
             if (!ModelState.IsValid) throw new BadRequestException("Invalid lab data");
 
-            //check if lab already exist
-            if (await _labService.LabExistsAsync(createLabDTO.location))
+            //check if lab already exists (by name)
+            if (await _labService.LabExistsAsync(createLabDTO.name))
             {
-                throw new BadRequestException($" Lab '{createLabDTO.location}' already exists");
+                throw new BadRequestException($"Lab '{createLabDTO.name}' already exists");
             }
 
             var lab = await _labService.CreateLabAsync(createLabDTO);

@@ -33,6 +33,10 @@ public partial class LabManagementDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<Department> Departments { get; set; }
+
+    public virtual DbSet<UserDepartment> UserDepartments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ActivityType>(entity =>
@@ -43,12 +47,35 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ActivityTypeId).HasColumnName("activity_type_id");
             entity.Property(e => e.Description)
-                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.DepartmentId).HasName("PK__departme__C2232422BA81382F");
+
+            entity.ToTable("departments");
+
+            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
+            entity.Property(e => e.Description)
+                .HasColumnName("description");
+            entity.Property(e => e.IsPublic)
+                .HasDefaultValue(false)
+                .HasColumnName("is_public");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+
+            entity.HasData(new Department
+            {
+                DepartmentId = 1,
+                Name = "General",
+                Description = "Default department for existing labs",
+                IsPublic = true
+            });
         });
 
         modelBuilder.Entity<Booking>(entity =>
@@ -73,7 +100,6 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Notes)
-                .IsUnicode(false)
                 .HasColumnName("notes");
             entity.Property(e => e.RowVersion)
                 .IsRowVersion()
@@ -115,15 +141,12 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.EquipmentId).HasColumnName("equipment_id");
             entity.Property(e => e.Code)
                 .HasMaxLength(50)
-                .IsUnicode(false)
                 .HasColumnName("code");
             entity.Property(e => e.Description)
-                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("name");
             entity.Property(e => e.Status).HasColumnName("status");
 
@@ -162,21 +185,25 @@ public partial class LabManagementDbContext : DbContext
 
             entity.ToTable("labs");
 
+            entity.HasIndex(e => e.DepartmentId, "IX_labs_department_id");
             entity.HasIndex(e => e.ManagerId, "IX_labs_manager_id");
 
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Description)
-                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.Location)
                 .HasMaxLength(255)
-                .IsUnicode(false)
                 .HasColumnName("location");
+            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
             entity.Property(e => e.ManagerId).HasColumnName("manager_id");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("name");
+
+            entity.HasOne(d => d.Department).WithMany(p => p.Labs)
+                .HasForeignKey(d => d.DepartmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__labs__departmen__6EC0713C");
 
             entity.HasOne(d => d.Manager).WithMany(p => p.Labs)
                 .HasForeignKey(d => d.ManagerId)
@@ -205,7 +232,6 @@ public partial class LabManagementDbContext : DbContext
                 .HasDefaultValueSql("(sysdatetime())")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description)
-                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.EndTime)
                 .HasPrecision(3)
@@ -222,7 +248,6 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.Title)
                 .HasMaxLength(200)
-                .IsUnicode(false)
                 .HasColumnName("title");
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
 
@@ -257,12 +282,10 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
             entity.Property(e => e.Description)
-                .IsUnicode(false)
                 .HasColumnName("description");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("name");
 
             entity.HasOne(d => d.Lab).WithMany(p => p.LabZones)
@@ -285,7 +308,6 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.EventId).HasColumnName("event_id");
             entity.Property(e => e.IsRead).HasColumnName("is_read");
             entity.Property(e => e.Message)
-                .IsUnicode(false)
                 .HasColumnName("message");
             entity.Property(e => e.RecipientId).HasColumnName("recipient_id");
             entity.Property(e => e.SentAt)
@@ -318,7 +340,6 @@ public partial class LabManagementDbContext : DbContext
 
             entity.Property(e => e.ReportId).HasColumnName("report_id");
             entity.Property(e => e.Content)
-                .IsUnicode(false)
                 .HasColumnName("content");
             entity.Property(e => e.GeneratedAt)
                 .HasPrecision(3)
@@ -327,11 +348,9 @@ public partial class LabManagementDbContext : DbContext
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.PhotoUrl)
                 .HasMaxLength(1000)
-                .IsUnicode(false)
                 .HasColumnName("photo_url");
             entity.Property(e => e.ReportType)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("report_type");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.ZoneId).HasColumnName("zone_id");
@@ -363,11 +382,9 @@ public partial class LabManagementDbContext : DbContext
                 .HasDefaultValueSql("(sysdatetime())")
                 .HasColumnName("logged_at");
             entity.Property(e => e.Notes)
-                .IsUnicode(false)
                 .HasColumnName("notes");
             entity.Property(e => e.PhotoUrl)
                 .HasMaxLength(255)
-                .IsUnicode(false)
                 .HasColumnName("photo_url");
             entity.Property(e => e.RowVersion)
                 .IsRowVersion()
@@ -401,17 +418,40 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("email");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
-                .IsUnicode(false)
                 .HasColumnName("name");
             entity.Property(e => e.PasswordHash)
                 .HasMaxLength(128)
-                .IsUnicode(false)
                 .HasColumnName("password_hash");
             entity.Property(e => e.Role).HasColumnName("role");
+        });
+
+        modelBuilder.Entity<UserDepartment>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.DepartmentId }).HasName("PK__user_dep__1EDFFB1951EA0F2F");
+
+            entity.ToTable("user_departments");
+
+            entity.HasIndex(e => e.DepartmentId, "IX_user_departments_department_id");
+
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
+            entity.Property(e => e.CreatedAt)
+                .HasPrecision(3)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserDepartments)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__user_depa__user___73BA3083");
+
+            entity.HasOne(d => d.Department).WithMany(p => p.UserDepartments)
+                .HasForeignKey(d => d.DepartmentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__user_depa__depar__74AE549C");
         });
 
         OnModelCreatingPartial(modelBuilder);
