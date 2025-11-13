@@ -1,9 +1,11 @@
+using LabManagement.API.Hubs;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LabManagement.API.Controllers
 {
@@ -15,10 +17,14 @@ namespace LabManagement.API.Controllers
     public class LabEventController : ControllerBase
     {
         private readonly ILabEventService _labEventService;
+        private readonly IHubContext<LabEventHub> _labEventHubContext;
 
-        public LabEventController(ILabEventService labEventService)
+        public LabEventController(
+            ILabEventService labEventService,
+            IHubContext<LabEventHub> labEventHubContext)
         {
             _labEventService = labEventService;
+            _labEventHubContext = labEventHubContext;
         }
 
         /// <summary>
@@ -75,11 +81,37 @@ namespace LabManagement.API.Controllers
                 throw new BadRequestException("Invalid lab event data");
 
             var labEvent = await _labEventService.CreateLabEventAsync(createLabEventDTO);
+            
+            // Notify subscribers about new event
+            await NotifyNewLabEventAsync(labEvent);
+            
             return CreatedAtAction(
                 nameof(GetLabEventById),
                 new { id = labEvent.EventId },
                 ApiResponse<LabEventDTO>.SuccessResponse(labEvent, "Lab event created successfully")
             );
+        }
+
+        private async Task NotifyNewLabEventAsync(LabEventDTO labEvent)
+        {
+            var eventData = new
+            {
+                eventId = labEvent.EventId,
+                labId = labEvent.LabId,
+                title = labEvent.Title,
+                description = labEvent.Description,
+                startTime = labEvent.StartTime,
+                endTime = labEvent.EndTime,
+                activityTypeId = labEvent.ActivityTypeId
+            };
+
+            // Notify all events subscribers
+            await _labEventHubContext.Clients.Group(LabEventHub.GetAllEventsGroupName())
+                .SendAsync("NewLabEvent", eventData);
+
+            // Notify specific lab subscribers
+            await _labEventHubContext.Clients.Group(LabEventHub.GetLabEventsGroupName(labEvent.LabId))
+                .SendAsync("NewLabEvent", eventData);
         }
 
         /// <summary>

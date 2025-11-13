@@ -129,8 +129,15 @@ namespace LabManagement.API.Controllers
 
             var (userId, role) = GetRequesterContext();
 
+            // Always use authenticated user's ID for Member role
+            // Admin/Manager can create booking for other users by passing userId in body
             if (role == Constant.UserRole.Member)
             {
+                createBookingDTO.UserId = userId;
+            }
+            else if (createBookingDTO.UserId == 0)
+            {
+                // If no userId specified in body, use authenticated user
                 createBookingDTO.UserId = userId;
             }
 

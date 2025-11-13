@@ -85,17 +85,30 @@ namespace LabManagement.API
                 };
             });
             builder.Services.AddControllers();
-            builder.Services.AddSignalR();
+            
+            // Add SignalR with detailed logging
+            builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true; // Enable detailed error messages for debugging
+            });
+            
             builder.Services.AddEndpointsApiExplorer();
 
-            // Add CORS - Allow Frontend to call API
+            // Add CORS - Allow Frontend to call API and SignalR
             builder.Services.AddCors(options =>
             {
+                // Development policy - Allow common dev origins with credentials for SignalR
                 options.AddPolicy("AllowAll", policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(
+                            "http://localhost:3000",      // React dev
+                            "http://localhost:5173",      // Vite dev
+                            "http://localhost:4200",      // Angular dev
+                            "http://localhost:8080"       // Vue dev
+                          )
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();          // Required for SignalR
                 });
                 
                 // More restrictive policy for production (recommended)
@@ -104,7 +117,7 @@ namespace LabManagement.API
                     policy.WithOrigins(
                             "http://localhost:3000",      // React dev
                             "http://localhost:5173",      // Vite dev
-                            "https://lab-management-fe.vercel.app/"  // Production frontend
+                            "https://lab-management-fe.vercel.app"  // Production frontend (removed trailing slash)
                           )
                           .AllowAnyMethod()
                           .AllowAnyHeader()
@@ -176,7 +189,13 @@ namespace LabManagement.API
 
 
             app.MapControllers();
+            
+            // Map SignalR Hubs
             app.MapHub<BookingHub>("/hubs/booking");
+            app.MapHub<EquipmentHub>("/hubs/equipment");
+            app.MapHub<SecurityLogHub>("/hubs/security");
+            app.MapHub<LabEventHub>("/hubs/lab-events");
+            app.MapHub<NotificationHub>("/hubs/notifications");
 
             app.Run();
         }
