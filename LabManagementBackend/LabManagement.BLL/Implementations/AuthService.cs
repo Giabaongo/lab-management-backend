@@ -31,14 +31,14 @@ namespace LabManagement.BLL.Implementations
 
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            // Validate input
+
             if (string.IsNullOrEmpty(loginDto.Email))
                 throw new BadRequestException("Email is required");
 
             if (string.IsNullOrEmpty(loginDto.Password))
                 throw new BadRequestException("Password is required");
 
-            // --- Redis: Check for lockout ---
+  
             string loginAttemptKey = $"login_attempts:{loginDto.Email}";
             var attempts = await _redisHelper.GetAsync(loginAttemptKey);
             if (!string.IsNullOrEmpty(attempts) && int.Parse(attempts) >= MaxLoginAttempts)
@@ -46,24 +46,23 @@ namespace LabManagement.BLL.Implementations
                 throw new UnauthorizedException($"Too many failed login attempts. Account locked for {LockoutMinutes} minutes.");
             }
 
-            // Get user by email
+        
             var user = await _unitOfWork.Users.GetByEmailAsync(loginDto.Email);
 
-            // Verify password
+ 
             if (user == null || !_passwordHasher.VerifyPassword(loginDto.Password, user.PasswordHash))
             {
-                // Redis: On failed login, increment attempt counter
+       
                 var currentAttempts = int.Parse(attempts ?? "0") + 1;
                 await _redisHelper.SetAsync(loginAttemptKey, currentAttempts.ToString(), TimeSpan.FromMinutes(LockoutMinutes));
 
-                // Throw the original exception
                 throw new UnauthorizedException("Invalid email or password");
             }
 
-            // Redis: On successful login, clear the attempt counter
+    
             await _redisHelper.DeleteAsync(loginAttemptKey);
 
-            // Create token
+     
             var claims = new[]
             {
                 new Claim("UserId", user.UserId.ToString(CultureInfo.InvariantCulture)),
