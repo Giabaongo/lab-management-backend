@@ -121,3 +121,21 @@ Xóa booking
   3. Thành viên chưa vượt quá `Constant.MaxDepartmentsPerMember` departments đang tham gia (kết hợp đăng ký + booking tương lai)
 - `CreatedAt` được tự động set khi tạo booking mới
 - Exception handling được xử lý qua `ExceptionMiddleware`
+
+## Real-time Notifications (SignalR)
+
+- **Hub:** `/hubs/booking` (`BookingHub`)  
+- **Groups:** mỗi Lab Manager join nhóm `manager:{managerId}` bằng cách gọi `JoinManagerGroup(managerId)` (có sẵn trong hub).  
+- **Server push:** khi `POST /api/bookings` tạo booking thành công, controller phát sự kiện `BookingCreated` lên nhóm của Lab Manager tương ứng với payload:
+  ```json
+  {
+    "bookingId": 12,
+    "labId": 3,
+    "labName": "Chemistry Lab",
+    "zoneId": 2,
+    "startTime": "2025-11-20T08:00:00Z",
+    "endTime": "2025-11-20T10:00:00Z",
+    "requestedByUserId": 42
+  }
+  ```
+- **Demo tip:** mở một client SignalR (Swagger, Postman, hoặc app FE) kết nối tới hub, join nhóm managerId, sau đó tạo booking bằng tài khoản member để thấy thông báo realtime cho Lab Manager.
