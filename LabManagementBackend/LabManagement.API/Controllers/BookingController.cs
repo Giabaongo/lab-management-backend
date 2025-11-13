@@ -1,3 +1,4 @@
+using System;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Constants;
@@ -5,6 +6,7 @@ using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace LabManagement.API.Controllers
 {
@@ -20,6 +22,29 @@ namespace LabManagement.API.Controllers
         public BookingController(IBookingService bookingService)
         {
             _bookingService = bookingService;
+        }
+
+        private (int userId, Constant.UserRole role) GetRequesterContext()
+        {
+            var userIdClaim = User.FindFirst("UserId") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirst(ClaimTypes.Role) ?? User.FindFirst("Role");
+
+            if (userIdClaim == null || roleClaim == null)
+            {
+                throw new UnauthorizedException("Missing authentication context");
+            }
+
+            if (!int.TryParse(userIdClaim.Value, out var userId))
+            {
+                throw new UnauthorizedException("Invalid user identifier");
+            }
+
+            if (!Enum.TryParse(roleClaim.Value, out Constant.UserRole role))
+            {
+                throw new UnauthorizedException("Invalid user role");
+            }
+
+            return (userId, role);
         }
 
         /// <summary>
@@ -55,7 +80,8 @@ namespace LabManagement.API.Controllers
             if (!ModelState.IsValid)
                 throw new BadRequestException("Invalid slot query parameters");
 
-            var slots = await _bookingService.GetAvailableSlotsAsync(query);
+            var (userId, role) = GetRequesterContext();
+            var slots = await _bookingService.GetAvailableSlotsAsync(query, userId, role);
             return Ok(ApiResponse<IEnumerable<AvailableSlotDTO>>.SuccessResponse(slots, "Available slots retrieved successfully"));
         }
 
@@ -89,7 +115,14 @@ namespace LabManagement.API.Controllers
             if (!ModelState.IsValid) 
                 throw new BadRequestException("Invalid booking data");
 
-            var booking = await _bookingService.CreateBookingAsync(createBookingDTO);
+            var (userId, role) = GetRequesterContext();
+
+            if (role == Constant.UserRole.Member)
+            {
+                createBookingDTO.UserId = userId;
+            }
+
+            var booking = await _bookingService.CreateBookingAsync(createBookingDTO, userId, role);
             return CreatedAtAction(
                 nameof(GetBookingById),
                 new { id = booking.BookingId },
