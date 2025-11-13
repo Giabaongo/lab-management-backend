@@ -63,6 +63,20 @@ namespace LabManagement.API.Controllers
             return Ok(ApiResponse<IEnumerable<DepartmentDTO>>.SuccessResponse(departments, "Member departments retrieved successfully"));
         }
 
+        /// <summary>
+        /// Get non-public departments that the member can register to (Member only)
+        /// </summary>
+        [HttpGet("registerable")]
+        [Authorize(Roles = nameof(Constant.UserRole.Member))]
+        public async Task<ActionResult<ApiResponse<IEnumerable<DepartmentDTO>>>> GetRegisterableDepartments()
+        {
+            var (userId, _) = GetRequesterContext();
+            var departments = await _departmentService.GetRegisterableDepartmentsAsync(userId);
+            return Ok(ApiResponse<IEnumerable<DepartmentDTO>>.SuccessResponse(
+                departments, 
+                "Registerable departments retrieved successfully"));
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<DepartmentDTO>>> GetDepartmentById(int id)
         {
@@ -130,7 +144,7 @@ namespace LabManagement.API.Controllers
             var (userId, role) = GetRequesterContext();
             await _departmentService.RegisterUserToDepartmentAsync(userId, id, role);
 
-            return Ok(ApiResponse<object>.SuccessResponse(new { departmentId = id }, "Registered to department successfully"));
+            return Ok(ApiResponse<object>.SuccessResponse(new { departmentId = id }, "Registration request submitted successfully. Waiting for approval."));
         }
 
         [HttpDelete("{id}/register")]
@@ -147,6 +161,42 @@ namespace LabManagement.API.Controllers
 
             await _departmentService.UnregisterUserFromDepartmentAsync(targetUserId, id);
             return Ok(ApiResponse<object>.SuccessResponse(new { departmentId = id, userId = targetUserId }, "Unregistered from department successfully"));
+        }
+
+        /// <summary>
+        /// Get pending registration requests for a department (Admin/SchoolManager only)
+        /// </summary>
+        [HttpGet("{id}/pending-registrations")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<DepartmentRegistrationDTO>>>> GetPendingRegistrations(int id)
+        {
+            var registrations = await _departmentService.GetPendingRegistrationsAsync(id);
+            return Ok(ApiResponse<IEnumerable<DepartmentRegistrationDTO>>.SuccessResponse(
+                registrations, 
+                "Pending registrations retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Approve or reject a department registration request (Admin/SchoolManager only)
+        /// </summary>
+        [HttpPost("{id}/approve-registration")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)}")]
+        public async Task<ActionResult<ApiResponse<object>>> ApproveRegistration(int id, [FromBody] ApproveRegistrationDTO approveDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                throw new BadRequestException("Invalid request data");
+            }
+
+            await _departmentService.ApproveOrRejectRegistrationAsync(id, approveDto.UserId, approveDto.Approve);
+            
+            var message = approveDto.Approve 
+                ? "Registration approved successfully" 
+                : "Registration rejected successfully";
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { departmentId = id, userId = approveDto.UserId, approved = approveDto.Approve }, 
+                message));
         }
     }
 }
