@@ -1,4 +1,5 @@
 using System;
+using LabManagement.API.Hubs;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Constants;
@@ -6,6 +7,7 @@ using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace LabManagement.API.Controllers
@@ -18,10 +20,17 @@ namespace LabManagement.API.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly ILabService _labService;
+        private readonly IHubContext<BookingHub> _bookingHubContext;
 
-        public BookingController(IBookingService bookingService)
+        public BookingController(
+            IBookingService bookingService,
+            ILabService labService,
+            IHubContext<BookingHub> bookingHubContext)
         {
             _bookingService = bookingService;
+            _labService = labService;
+            _bookingHubContext = bookingHubContext;
         }
 
         private (int userId, Constant.UserRole role) GetRequesterContext()
@@ -126,11 +135,35 @@ namespace LabManagement.API.Controllers
             }
 
             var booking = await _bookingService.CreateBookingAsync(createBookingDTO, userId, role);
+            await NotifyManagerAboutBookingAsync(booking);
+
             return CreatedAtAction(
                 nameof(GetBookingById),
                 new { id = booking.BookingId },
                 ApiResponse<BookingDTO>.SuccessResponse(booking, "Booking created successfully")
             );
+        }
+
+        private async Task NotifyManagerAboutBookingAsync(BookingDTO booking)
+        {
+            var lab = await _labService.GetLabByIdAsync(booking.LabId);
+            if (lab == null)
+            {
+                return;
+            }
+
+            var groupName = BookingHub.GetManagerGroupName(lab.managerId);
+            await _bookingHubContext.Clients.Group(groupName)
+                .SendAsync("BookingCreated", new
+                {
+                    bookingId = booking.BookingId,
+                    labId = booking.LabId,
+                    labName = lab.labName,
+                    zoneId = booking.ZoneId,
+                    startTime = booking.StartTime,
+                    endTime = booking.EndTime,
+                    requestedByUserId = booking.UserId
+                });
         }
 
         /// <summary>

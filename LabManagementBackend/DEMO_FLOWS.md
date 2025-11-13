@@ -76,6 +76,7 @@ This guide lists the main flows you can showcase when demoing the Lab Management
 ### 3.4 Update / Cancel
 - `PUT /api/bookings/{id}` to adjust slots.
 - `DELETE /api/bookings/{id}` (Admin/SchoolManager) to show governance.
+- **Realtime demo:** Spin up a SignalR client connected to `/hubs/booking`, call `JoinManagerGroup(<managerId>)`, then submit a new booking as a member. The Lab Manager’s client receives the `BookingCreated` payload instantly.
 
 ---
 

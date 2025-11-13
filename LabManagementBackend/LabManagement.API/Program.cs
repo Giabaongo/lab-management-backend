@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using LabManagement.API.Hubs;
 using LabManagement.BLL.Implementations;
 using LabManagement.BLL.Interfaces;
 using LabManagement.BLL.Mappings;
@@ -84,6 +85,7 @@ namespace LabManagement.API
                 };
             });
             builder.Services.AddControllers();
+            builder.Services.AddSignalR();
             builder.Services.AddEndpointsApiExplorer();
 
             // Add CORS - Allow Frontend to call API
@@ -174,6 +176,7 @@ namespace LabManagement.API
 
 
             app.MapControllers();
+            app.MapHub<BookingHub>("/hubs/booking");
 
             app.Run();
         }
