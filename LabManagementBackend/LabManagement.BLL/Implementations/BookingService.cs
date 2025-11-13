@@ -1,6 +1,7 @@
 using AutoMapper;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
+using LabManagement.Common.Constants;
 using LabManagement.Common.Extensions;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -24,8 +26,15 @@ namespace LabManagement.BLL.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<BookingDTO> CreateBookingAsync(CreateBookingDTO createBookingDTO)
+        public async Task<BookingDTO> CreateBookingAsync(CreateBookingDTO createBookingDTO, int requesterId, Constant.UserRole requesterRole)
         {
+            await EnsureLabAccessAsync(createBookingDTO.LabId, requesterId, requesterRole);
+
+            if (requesterRole == Constant.UserRole.Member && createBookingDTO.UserId != requesterId)
+            {
+                throw new UnauthorizedException("Members can only create bookings for themselves");
+            }
+
             var booking = _mapper.Map<Booking>(createBookingDTO);
             await _unitOfWork.Bookings.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
@@ -118,7 +127,7 @@ namespace LabManagement.BLL.Implementations
             return _mapper.Map<BookingDTO>(booking);
         }
 
-        public async Task<IEnumerable<AvailableSlotDTO>> GetAvailableSlotsAsync(AvailableSlotQueryDTO query)
+        public async Task<IEnumerable<AvailableSlotDTO>> GetAvailableSlotsAsync(AvailableSlotQueryDTO query, int requesterId, Constant.UserRole requesterRole)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
@@ -134,6 +143,8 @@ namespace LabManagement.BLL.Implementations
 
             if (query.DayEnd <= query.DayStart)
                 throw new BadRequestException("DayEnd must be after DayStart.");
+
+            await EnsureLabAccessAsync(query.LabId, requesterId, requesterRole);
 
             var slotDuration = TimeSpan.FromMinutes(query.SlotDurationMinutes);
             if (slotDuration >= query.DayEnd - query.DayStart)
@@ -161,6 +172,41 @@ namespace LabManagement.BLL.Implementations
             }
 
             return availableSlots;
+        }
+
+        private static bool IsElevatedRole(Constant.UserRole role)
+        {
+            return role == Constant.UserRole.Admin ||
+                   role == Constant.UserRole.SchoolManager;
+        }
+
+        private async Task EnsureLabAccessAsync(int labId, int requesterId, Constant.UserRole requesterRole)
+        {
+            var lab = await _unitOfWork.Labs
+                .GetLabsQueryable()
+                .Include(l => l.Department)
+                    .ThenInclude(d => d.UserDepartments)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.LabId == labId);
+
+            if (lab == null)
+            {
+                throw new NotFoundException("Lab", labId);
+            }
+
+            if (IsElevatedRole(requesterRole))
+            {
+                return;
+            }
+
+            var hasAccess = lab.Department.IsPublic ||
+                            lab.ManagerId == requesterId ||
+                            lab.Department.UserDepartments.Any(ud => ud.UserId == requesterId);
+
+            if (!hasAccess)
+            {
+                throw new UnauthorizedException("You do not have permission to access this lab");
+            }
         }
     }
 }

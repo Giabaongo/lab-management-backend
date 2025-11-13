@@ -15,10 +15,11 @@
 - **Implementations/BookingService.cs** - Implementation của booking service với các methods:
   - GetAllBookingsAsync()
   - GetBookingByIdAsync(int id)
-  - CreateBookingAsync(CreateBookingDTO)
+  - CreateBookingAsync(CreateBookingDTO, requesterId, requesterRole) *(kiểm tra quyền truy cập lab + buộc member đặt cho chính họ)*
   - UpdateBookingAsync(int id, UpdateBookingDTO)
   - DeleteBookingAsync(int id)
   - BookingExistsAsync(int id)
+  - GetAvailableSlotsAsync(AvailableSlotQueryDTO, requesterId, requesterRole) *(chỉ trả slot cho lab mà người dùng có quyền xem)*
 
 ### 4. Repository Layer (LabManagement.DAL/)
 - **Interfaces/IBookingRepository.cs** - Interface cho booking repository
@@ -114,6 +115,7 @@ Xóa booking
 - Tất cả endpoints đều sử dụng JWT authentication
 - DELETE endpoint chỉ cho phép Admin và SchoolManager
 - Các endpoints khác cho phép mọi authenticated user
+- Khi lấy slot hoặc tạo booking, hệ thống kiểm tra lab thuộc department public hoặc department mà người dùng đã đăng ký (hoặc do họ quản lý). Member chỉ được tạo booking cho chính mình.
 - CreatedAt được tự động set khi tạo booking mới
 - Sử dụng ApiResponse wrapper cho tất cả responses
 - Exception handling được xử lý qua ExceptionMiddleware

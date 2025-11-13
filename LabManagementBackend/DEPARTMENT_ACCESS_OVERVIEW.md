@@ -63,4 +63,13 @@ Filtering rules (implemented in `ApplyVisibilityFilter`):
 3. Update clients to consume the new DTO fields and call department APIs for member registration.
 4. Ensure JWT tokens include `UserId` and `Role` claims (already required by controllers).
 
-With these changes in place, members can self-manage department access (up to two departments), and lab listings automatically respect visibility rules. Admins retain full control via the CRUD endpoints.
+## 6. Booking Enforcement
+
+`BookingController` now enforces the same visibility rules:
+
+- `GET /api/bookings/available-slots` requires the caller to have access to the requested lab (public department, registered department, or they manage the lab). Members cannot inspect slots for unauthorized labs.
+- `POST /api/bookings` reuses this guard and also forces members to book only for themselves. Elevated roles (Admin/SchoolManager) bypass the filter and can book on behalf of others.
+
+This ensures the end-to-end experience matches the original intent: members only interact with labs that belong to their registered or public departments.
+
+With these changes in place, members can self-manage department access (up to two departments), lab listings automatically respect visibility rules, and booking endpoints enforce the same constraints. Admins retain full control via the CRUD endpoints.
