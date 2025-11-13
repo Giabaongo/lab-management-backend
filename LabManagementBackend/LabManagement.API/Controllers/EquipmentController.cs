@@ -1,10 +1,12 @@
-﻿using LabManagement.BLL.DTOs;
+﻿using LabManagement.API.Hubs;
+using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Constants;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LabManagement.API.Controllers
 {
@@ -16,17 +18,22 @@ namespace LabManagement.API.Controllers
     public class EquipmentController : ControllerBase
     {
         private readonly IEquipmentService _equipmentService;
+        private readonly IHubContext<EquipmentHub> _equipmentHubContext;
+        
         /// <summary>
         /// Get all equipment (SchoolManager and Admin only)
         /// </summary>
         /// <returns>List of users</returns>>
-        public EquipmentController(IEquipmentService equipmentService)
+        public EquipmentController(
+            IEquipmentService equipmentService,
+            IHubContext<EquipmentHub> equipmentHubContext)
         {
             _equipmentService = equipmentService;
+            _equipmentHubContext = equipmentHubContext;
         }
 
         [HttpGet]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult> GetAllEquipment()
         {
             var equipments = await _equipmentService.GetAllEquipmentAsync();
@@ -37,7 +44,7 @@ namespace LabManagement.API.Controllers
         /// Get equipment with search, sort, and pagination
         /// </summary>
         [HttpGet("paged")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<PagedResult<EquipmentDTO>>>> GetEquipmentPaged([FromQuery] QueryParameters queryParams)
         {
             var equipments = await _equipmentService.GetEquipmentAsync(queryParams);
@@ -49,7 +56,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <returns>Equipment data</returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)}")]
         public async Task<ActionResult> GetEquipmentById(int id)
         {
             var equipment = await _equipmentService.GetEquipmentByIdAsync(id);
@@ -69,7 +76,43 @@ namespace LabManagement.API.Controllers
             var updatedEquipment = await _equipmentService.UpdateEquipmentAsync(id, updateEquipmentDTO);
             if (updatedEquipment == null)
                 throw new NotFoundException("Equipment not found");
+            
+            // Notify if status changed to broken or maintenance
+            if (updatedEquipment.Status == 2 || updatedEquipment.Status == 3) // Broken or Maintenance
+            {
+                await NotifyEquipmentStatusChangeAsync(updatedEquipment);
+            }
+            
             return Ok(ApiResponse<EquipmentDTO>.SuccessResponse(updatedEquipment, "Equipment updated successfully"));
+        }
+
+        private async Task NotifyEquipmentStatusChangeAsync(EquipmentDTO equipment)
+        {
+            // Notify all managers
+            await _equipmentHubContext.Clients.Group(EquipmentHub.GetAllManagersGroupName())
+                .SendAsync("EquipmentStatusChanged", new
+                {
+                    equipmentId = equipment.EquipmentId,
+                    equipmentName = equipment.Name,
+                    equipmentCode = equipment.Code,
+                    labId = equipment.LabId,
+                    status = equipment.Status,
+                    statusText = equipment.Status == 2 ? "Broken" : "Under Maintenance",
+                    timestamp = DateTime.UtcNow
+                });
+
+            // Also notify specific lab managers
+            await _equipmentHubContext.Clients.Group(EquipmentHub.GetLabManagerGroupName(equipment.LabId))
+                .SendAsync("EquipmentStatusChanged", new
+                {
+                    equipmentId = equipment.EquipmentId,
+                    equipmentName = equipment.Name,
+                    equipmentCode = equipment.Code,
+                    labId = equipment.LabId,
+                    status = equipment.Status,
+                    statusText = equipment.Status == 2 ? "Broken" : "Under Maintenance",
+                    timestamp = DateTime.UtcNow
+                });
         }
 
         /// <summary>

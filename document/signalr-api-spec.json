@@ -1,0 +1,428 @@
+{
+  "apiVersion": "1.0.0",
+  "baseUrl": "http://localhost:5162",
+  "protocol": "WebSocket",
+  "signalRVersion": "8.0.0",
+  "hubs": [
+    {
+      "name": "Booking Hub",
+      "endpoint": "/hubs/booking",
+      "fullUrl": "http://localhost:5162/hubs/booking",
+      "description": "Real-time booking notifications for lab managers",
+      "status": "active",
+      "methods": [
+        {
+          "name": "JoinManagerGroup",
+          "parameters": [
+            {
+              "name": "managerId",
+              "type": "number",
+              "required": true,
+              "description": "ID của manager (MUST be number, not string)"
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Join nhóm manager để nhận booking notifications"
+        },
+        {
+          "name": "LeaveManagerGroup",
+          "parameters": [
+            {
+              "name": "managerId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi nhóm manager"
+        }
+      ],
+      "events": [
+        {
+          "name": "BookingCreated",
+          "description": "Triggered when a new booking is created",
+          "payload": {
+            "bookingId": "number",
+            "userId": "number",
+            "labId": "number",
+            "zoneId": "number",
+            "startTime": "string (ISO 8601)",
+            "endTime": "string (ISO 8601)",
+            "status": "number",
+            "notes": "string | null",
+            "createdAt": "string (ISO 8601)",
+            "managerName": "string | null",
+            "labName": "string",
+            "zoneName": "string"
+          }
+        }
+      ],
+      "integration": {
+        "controller": "BookingController",
+        "trigger": "CreateBooking action",
+        "implemented": true
+      }
+    },
+    {
+      "name": "Equipment Hub",
+      "endpoint": "/hubs/equipment",
+      "fullUrl": "http://localhost:5162/hubs/equipment",
+      "description": "Real-time equipment status change notifications",
+      "status": "active",
+      "methods": [
+        {
+          "name": "JoinAllManagersGroup",
+          "parameters": [],
+          "returns": "Promise<void>",
+          "description": "Join nhóm all managers - nhận tất cả equipment alerts"
+        },
+        {
+          "name": "LeaveAllManagersGroup",
+          "parameters": [],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi nhóm all managers"
+        },
+        {
+          "name": "JoinLabGroup",
+          "parameters": [
+            {
+              "name": "labId",
+              "type": "number",
+              "required": true,
+              "description": "ID của lab (MUST be number)"
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Join nhóm lab cụ thể"
+        },
+        {
+          "name": "LeaveLabGroup",
+          "parameters": [
+            {
+              "name": "labId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi nhóm lab"
+        }
+      ],
+      "events": [
+        {
+          "name": "EquipmentStatusChanged",
+          "description": "Triggered when equipment status changes to Broken (2) or Maintenance (3)",
+          "payload": {
+            "equipmentId": "number",
+            "name": "string",
+            "code": "string",
+            "labId": "number",
+            "status": "number (2=Broken, 3=Maintenance)",
+            "statusText": "string",
+            "timestamp": "string (ISO 8601)"
+          }
+        }
+      ],
+      "integration": {
+        "controller": "EquipmentController",
+        "trigger": "UpdateEquipment action (when status = 2 or 3)",
+        "implemented": true
+      }
+    },
+    {
+      "name": "Security Log Hub",
+      "endpoint": "/hubs/security",
+      "fullUrl": "http://localhost:5162/hubs/security",
+      "description": "Real-time security alerts and incident notifications",
+      "status": "active",
+      "methods": [
+        {
+          "name": "JoinSecurityTeamGroup",
+          "parameters": [],
+          "returns": "Promise<void>",
+          "description": "Join security team - nhận tất cả security alerts"
+        },
+        {
+          "name": "LeaveSecurityTeamGroup",
+          "parameters": [],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi security team"
+        },
+        {
+          "name": "JoinLabSecurityGroup",
+          "parameters": [
+            {
+              "name": "labId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Join security group của lab cụ thể"
+        },
+        {
+          "name": "LeaveLabSecurityGroup",
+          "parameters": [
+            {
+              "name": "labId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi security group của lab"
+        }
+      ],
+      "events": [
+        {
+          "name": "SecurityAlert",
+          "description": "Triggered when a new security log is created",
+          "payload": {
+            "logId": "number",
+            "eventId": "number | null",
+            "securityId": "number | null",
+            "actionType": "string",
+            "notes": "string | null",
+            "photoUrl": "string | null",
+            "loggedAt": "string (ISO 8601)",
+            "severity": "string (High/Medium/Low)"
+          }
+        }
+      ],
+      "integration": {
+        "controller": "SecurityLogController",
+        "trigger": "CreateSecurityLog action",
+        "implemented": true
+      }
+    },
+    {
+      "name": "Lab Event Hub",
+      "endpoint": "/hubs/lab-events",
+      "fullUrl": "http://localhost:5162/hubs/lab-events",
+      "description": "Real-time lab event notifications and updates",
+      "status": "active",
+      "methods": [
+        {
+          "name": "JoinAllEventsGroup",
+          "parameters": [],
+          "returns": "Promise<void>",
+          "description": "Join nhóm all events"
+        },
+        {
+          "name": "LeaveAllEventsGroup",
+          "parameters": [],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi nhóm all events"
+        },
+        {
+          "name": "SubscribeToLabEvents",
+          "parameters": [
+            {
+              "name": "labId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Subscribe events của lab cụ thể"
+        },
+        {
+          "name": "UnsubscribeFromLabEvents",
+          "parameters": [
+            {
+              "name": "labId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Unsubscribe events của lab"
+        },
+        {
+          "name": "SubscribeToEvent",
+          "parameters": [
+            {
+              "name": "eventId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Subscribe một event cụ thể"
+        },
+        {
+          "name": "UnsubscribeFromEvent",
+          "parameters": [
+            {
+              "name": "eventId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Unsubscribe event cụ thể"
+        }
+      ],
+      "events": [
+        {
+          "name": "NewLabEvent",
+          "description": "Triggered when a new lab event is created",
+          "payload": {
+            "eventId": "number",
+            "labId": "number",
+            "title": "string",
+            "description": "string | null",
+            "startTime": "string (ISO 8601)",
+            "endTime": "string (ISO 8601)",
+            "activityTypeId": "number"
+          }
+        }
+      ],
+      "integration": {
+        "controller": "LabEventController",
+        "trigger": "CreateLabEvent action",
+        "implemented": true
+      }
+    },
+    {
+      "name": "Notification Hub",
+      "endpoint": "/hubs/notifications",
+      "fullUrl": "http://localhost:5162/hubs/notifications",
+      "description": "General notification system (Ready but not integrated yet)",
+      "status": "ready",
+      "methods": [
+        {
+          "name": "JoinUserGroup",
+          "parameters": [
+            {
+              "name": "userId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Join user group để nhận notifications cá nhân"
+        },
+        {
+          "name": "LeaveUserGroup",
+          "parameters": [
+            {
+              "name": "userId",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi user group"
+        },
+        {
+          "name": "JoinRoleGroup",
+          "parameters": [
+            {
+              "name": "role",
+              "type": "string",
+              "required": true,
+              "description": "Role name: Admin, Manager, Member"
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Join role group"
+        },
+        {
+          "name": "LeaveRoleGroup",
+          "parameters": [
+            {
+              "name": "role",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "returns": "Promise<void>",
+          "description": "Rời khỏi role group"
+        }
+      ],
+      "events": [
+        {
+          "name": "ReceiveNotification",
+          "description": "General notification event (Not implemented in controllers yet)",
+          "payload": {
+            "notificationId": "number",
+            "userId": "number | null",
+            "role": "string | null",
+            "title": "string",
+            "message": "string",
+            "type": "string (Info/Warning/Error/Success)",
+            "createdAt": "string (ISO 8601)",
+            "isRead": "boolean"
+          }
+        }
+      ],
+      "integration": {
+        "controller": "None",
+        "trigger": "Not implemented yet",
+        "implemented": false
+      }
+    }
+  ],
+  "commonErrors": [
+    {
+      "error": "InvalidDataException",
+      "cause": "Gửi string thay vì number cho ID parameters",
+      "solution": "Convert string to number: parseInt(id) hoặc Number(id)",
+      "example": {
+        "wrong": "connection.invoke('JoinManagerGroup', '3')",
+        "correct": "connection.invoke('JoinManagerGroup', 3)"
+      }
+    },
+    {
+      "error": "HubException: Invalid ID",
+      "cause": "ID <= 0",
+      "solution": "Validate ID > 0 trước khi gửi"
+    },
+    {
+      "error": "Connection failed",
+      "cause": "API không chạy hoặc CORS issue",
+      "solution": "Kiểm tra API đang chạy tại http://localhost:5162"
+    },
+    {
+      "error": "Failed to invoke method",
+      "cause": "Connection chưa established",
+      "solution": "Đợi connection.start() hoàn thành trước khi invoke"
+    }
+  ],
+  "typeScriptDefinitions": {
+    "BookingEventData": "interface BookingEventData {\n  bookingId: number;\n  userId: number;\n  labId: number;\n  zoneId: number;\n  startTime: string;\n  endTime: string;\n  status: number;\n  notes: string | null;\n  createdAt: string;\n  managerName: string | null;\n  labName: string;\n  zoneName: string;\n}",
+    "EquipmentStatusEventData": "interface EquipmentStatusEventData {\n  equipmentId: number;\n  name: string;\n  code: string;\n  labId: number;\n  status: number;\n  statusText: string;\n  timestamp: string;\n}",
+    "SecurityAlertEventData": "interface SecurityAlertEventData {\n  logId: number;\n  eventId: number | null;\n  securityId: number | null;\n  actionType: string;\n  notes: string | null;\n  photoUrl: string | null;\n  loggedAt: string;\n  severity: string;\n}",
+    "LabEventEventData": "interface LabEventEventData {\n  eventId: number;\n  labId: number;\n  title: string;\n  description: string | null;\n  startTime: string;\n  endTime: string;\n  activityTypeId: number;\n}",
+    "NotificationEventData": "interface NotificationEventData {\n  notificationId: number;\n  userId: number | null;\n  role: string | null;\n  title: string;\n  message: string;\n  type: string;\n  createdAt: string;\n  isRead: boolean;\n}"
+  },
+  "quickStart": {
+    "install": "npm install @microsoft/signalr",
+    "basicExample": "const connection = new signalR.HubConnectionBuilder()\n  .withUrl('http://localhost:5162/hubs/booking')\n  .withAutomaticReconnect()\n  .build();\n\nconnection.on('BookingCreated', (data) => {\n  console.log('New booking:', data);\n});\n\nawait connection.start();\nawait connection.invoke('JoinManagerGroup', 3);"
+  },
+  "authentication": {
+    "status": "Not implemented yet",
+    "futureImplementation": "const connection = new signalR.HubConnectionBuilder()\n  .withUrl('http://localhost:5162/hubs/booking', {\n    accessTokenFactory: () => localStorage.getItem('jwt_token')\n  })\n  .build();"
+  },
+  "testingResources": {
+    "htmlTestClient": "test-all-signalr-hubs.html",
+    "testClientUrl": "http://localhost:8080/test-all-signalr-hubs.html",
+    "documentation": [
+      "SIGNALR_API_FOR_FRONTEND.md",
+      "SIGNALR_FRONTEND_INTEGRATION.md",
+      "SIGNALR_TESTING_SUMMARY.md",
+      "SIGNALR_QUICK_TEST.md"
+    ]
+  },
+  "notes": [
+    "⚠️ ALL ID parameters MUST be sent as number (int), NOT string",
+    "✅ Use .withAutomaticReconnect() for auto-reconnection",
+    "✅ Listen to events BEFORE calling .start()",
+    "✅ Handle onclose, onreconnecting, onreconnected events",
+    "⚠️ NotificationHub is ready but not integrated with any controller yet",
+    "⚠️ No authentication implemented - hubs are currently public"
+  ],
+  "lastUpdated": "2025-11-13",
+  "apiStatus": "Development"
+}

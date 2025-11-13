@@ -18,6 +18,8 @@ namespace LabManagement.DAL.Implementations
         private IEquipmentRepository? _equipmentRepository;
         private INotificationRepository? _notificationRepository;
         private IReportRepository? _reportRepository;
+        private IDepartmentRepository? _departmentRepository;
+        private IUserDepartmentRepository? _userDepartmentRepository;
 
         public UnitOfWork(LabManagementDbContext context)
         {
@@ -42,6 +44,10 @@ namespace LabManagement.DAL.Implementations
         public INotificationRepository Notifications => _notificationRepository ??= new NotificationRepository(_context);
 
         public IReportRepository Reports => _reportRepository ??= new ReportRepository(_context);
+
+        public IDepartmentRepository Departments => _departmentRepository ??= new DepartmentRepository(_context);
+
+        public IUserDepartmentRepository UserDepartments => _userDepartmentRepository ??= new UserDepartmentRepository(_context);
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

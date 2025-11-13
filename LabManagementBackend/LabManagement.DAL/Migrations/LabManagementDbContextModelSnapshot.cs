@@ -32,15 +32,13 @@ namespace LabManagement.DAL.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ActivityTypeId"));
 
                     b.Property<string>("Description")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.HasKey("ActivityTypeId")
@@ -75,8 +73,7 @@ namespace LabManagement.DAL.Migrations
                         .HasColumnName("lab_id");
 
                     b.Property<string>("Notes")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("notes");
 
                     b.Property<byte[]>("RowVersion")
@@ -115,6 +112,35 @@ namespace LabManagement.DAL.Migrations
                     b.ToTable("bookings", (string)null);
                 });
 
+            modelBuilder.Entity("LabManagement.DAL.Models.Department", b =>
+                {
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_public");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("DepartmentId")
+                        .HasName("PK__departme__C2232422");
+
+                    b.ToTable("departments", (string)null);
+                });
+
             modelBuilder.Entity("LabManagement.DAL.Models.Equipment", b =>
                 {
                     b.Property<int>("EquipmentId")
@@ -127,13 +153,11 @@ namespace LabManagement.DAL.Migrations
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("code");
 
                     b.Property<string>("Description")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<int>("LabId")
@@ -143,8 +167,7 @@ namespace LabManagement.DAL.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.Property<int>("Status")
@@ -162,7 +185,7 @@ namespace LabManagement.DAL.Migrations
                     b.ToTable("equipment", (string)null);
                 });
 
-            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipant", b =>
+            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipants", b =>
                 {
                     b.Property<int>("EventId")
                         .HasColumnType("int")
@@ -193,15 +216,25 @@ namespace LabManagement.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LabId"));
 
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("department_id");
+
                     b.Property<string>("Description")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
+
+                    b.Property<bool>("IsOpen")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_open");
 
                     b.Property<string>("Location")
                         .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("location");
 
                     b.Property<int>("ManagerId")
@@ -211,12 +244,19 @@ namespace LabManagement.DAL.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("status");
 
                     b.HasKey("LabId")
                         .HasName("PK__labs__66DE64DB381C94E8");
+
+                    b.HasIndex(new[] { "DepartmentId" }, "IX_labs_department_id");
 
                     b.HasIndex(new[] { "ManagerId" }, "IX_labs_manager_id");
 
@@ -244,8 +284,7 @@ namespace LabManagement.DAL.Migrations
                         .HasDefaultValueSql("(sysdatetime())");
 
                     b.Property<string>("Description")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<DateTime>("EndTime")
@@ -280,8 +319,7 @@ namespace LabManagement.DAL.Migrations
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(200)")
+                        .HasColumnType("nvarchar(200)")
                         .HasColumnName("title");
 
                     b.Property<int>("ZoneId")
@@ -312,8 +350,7 @@ namespace LabManagement.DAL.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ZoneId"));
 
                     b.Property<string>("Description")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<int>("LabId")
@@ -323,8 +360,7 @@ namespace LabManagement.DAL.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.HasKey("ZoneId")
@@ -354,8 +390,7 @@ namespace LabManagement.DAL.Migrations
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("message");
 
                     b.Property<int>("RecipientId")
@@ -389,8 +424,7 @@ namespace LabManagement.DAL.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReportId"));
 
                     b.Property<string>("Content")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("content");
 
                     b.Property<DateTime>("GeneratedAt")
@@ -406,15 +440,13 @@ namespace LabManagement.DAL.Migrations
 
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(1000)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(1000)")
+                        .HasColumnType("nvarchar(1000)")
                         .HasColumnName("photo_url");
 
                     b.Property<string>("ReportType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("report_type");
 
                     b.Property<int?>("UserId")
@@ -462,14 +494,12 @@ namespace LabManagement.DAL.Migrations
                         .HasDefaultValueSql("(sysdatetime())");
 
                     b.Property<string>("Notes")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(max)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("notes");
 
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("photo_url");
 
                     b.Property<byte[]>("RowVersion")
@@ -512,22 +542,19 @@ namespace LabManagement.DAL.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("email");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(128)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("password_hash");
 
                     b.Property<int>("Role")
@@ -541,6 +568,31 @@ namespace LabManagement.DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("LabManagement.DAL.Models.UserDepartment", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(3)
+                        .HasColumnType("datetime2(3)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("(sysdatetime())");
+
+                    b.HasKey("UserId", "DepartmentId")
+                        .HasName("PK__user_dep__1EDFFB19");
+
+                    b.HasIndex(new[] { "DepartmentId" }, "IX_user_departments_department_id");
+
+                    b.ToTable("user_departments", (string)null);
                 });
 
             modelBuilder.Entity("LabManagement.DAL.Models.Booking", b =>
@@ -581,7 +633,7 @@ namespace LabManagement.DAL.Migrations
                     b.Navigation("Lab");
                 });
 
-            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipant", b =>
+            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipants", b =>
                 {
                     b.HasOne("LabManagement.DAL.Models.LabEvent", "Event")
                         .WithMany("EventParticipants")
@@ -602,11 +654,19 @@ namespace LabManagement.DAL.Migrations
 
             modelBuilder.Entity("LabManagement.DAL.Models.Lab", b =>
                 {
+                    b.HasOne("LabManagement.DAL.Models.Department", "Department")
+                        .WithMany("Labs")
+                        .HasForeignKey("DepartmentId")
+                        .IsRequired()
+                        .HasConstraintName("FK__labs__departmen__6EC0713C");
+
                     b.HasOne("LabManagement.DAL.Models.User", "Manager")
                         .WithMany("Labs")
                         .HasForeignKey("ManagerId")
                         .IsRequired()
                         .HasConstraintName("FK__labs__manager_id__6FB49575");
+
+                    b.Navigation("Department");
 
                     b.Navigation("Manager");
                 });
@@ -712,9 +772,37 @@ namespace LabManagement.DAL.Migrations
                     b.Navigation("Security");
                 });
 
+            modelBuilder.Entity("LabManagement.DAL.Models.UserDepartment", b =>
+                {
+                    b.HasOne("LabManagement.DAL.Models.Department", "Department")
+                        .WithMany("UserDepartments")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK__user_depa__depar__74AE549C");
+
+                    b.HasOne("LabManagement.DAL.Models.User", "User")
+                        .WithMany("UserDepartments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK__user_depa__user___73BA3083");
+
+                    b.Navigation("Department");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("LabManagement.DAL.Models.ActivityType", b =>
                 {
                     b.Navigation("LabEvents");
+                });
+
+            modelBuilder.Entity("LabManagement.DAL.Models.Department", b =>
+                {
+                    b.Navigation("Labs");
+
+                    b.Navigation("UserDepartments");
                 });
 
             modelBuilder.Entity("LabManagement.DAL.Models.Lab", b =>
@@ -761,6 +849,8 @@ namespace LabManagement.DAL.Migrations
                     b.Navigation("Notifications");
 
                     b.Navigation("SecurityLogs");
+
+                    b.Navigation("UserDepartments");
                 });
 #pragma warning restore 612, 618
         }

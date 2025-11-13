@@ -15,7 +15,15 @@ public partial class Lab
 
     public string? Description { get; set; }
 
+    public int DepartmentId { get; set; }
+
+    public bool IsOpen { get; set; }
+
+    public int Status { get; set; }
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual Department Department { get; set; } = null!;
 
     public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
 
