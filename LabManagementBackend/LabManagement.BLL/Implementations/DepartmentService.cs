@@ -77,7 +77,7 @@ namespace LabManagement.BLL.Implementations
         {
             var departments = await _unitOfWork.Departments
                 .GetDepartmentsQueryable()
-                .Where(d => d.UserDepartments.Any(ud => ud.UserId == userId))
+                .Where(d => d.UserDepartments.Any(ud => ud.UserId == userId && ud.Status == (int)Constant.RegistrationStatus.Approved))
                 .Include(d => d.UserDepartments)
                 .AsNoTracking()
                 .ToListAsync();
@@ -115,6 +115,12 @@ namespace LabManagement.BLL.Implementations
                 throw new NotFoundException("Department", departmentId);
             }
 
+            // Public departments don't require registration
+            if (department.IsPublic)
+            {
+                throw new BadRequestException("Public departments are accessible to everyone. No registration required.");
+            }
+
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null)
             {
@@ -129,20 +135,37 @@ namespace LabManagement.BLL.Implementations
             var existingMembership = await _unitOfWork.UserDepartments.GetMembershipAsync(userId, departmentId);
             if (existingMembership != null)
             {
-                throw new BadRequestException("You are already registered to this department");
+                if (existingMembership.Status == (int)Constant.RegistrationStatus.Pending)
+                {
+                    throw new BadRequestException("You already have a pending registration request for this department");
+                }
+                else if (existingMembership.Status == (int)Constant.RegistrationStatus.Approved)
+                {
+                    throw new BadRequestException("You are already a member of this department");
+                }
+                else if (existingMembership.Status == (int)Constant.RegistrationStatus.Rejected)
+                {
+                    throw new BadRequestException("Your previous registration request was rejected. Please contact an administrator.");
+                }
             }
 
-            var membershipCount = await _unitOfWork.UserDepartments.CountByUserAsync(userId);
-            if (membershipCount >= Constant.MaxDepartmentsPerMember)
+            // Count only approved memberships for the limit check
+            var approvedMembershipCount = await _unitOfWork.UserDepartments
+                .GetUserDepartmentsQueryable()
+                .Where(ud => ud.UserId == userId && ud.Status == (int)Constant.RegistrationStatus.Approved)
+                .CountAsync();
+                
+            if (approvedMembershipCount >= Constant.MaxDepartmentsPerMember)
             {
-                throw new BadRequestException($"Members can only register to {Constant.MaxDepartmentsPerMember} departments");
+                throw new BadRequestException($"Members can only be part of {Constant.MaxDepartmentsPerMember} departments");
             }
 
             var membership = new UserDepartment
             {
                 DepartmentId = departmentId,
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                Status = (int)Constant.RegistrationStatus.Pending // Set to pending by default
             };
 
             await _unitOfWork.UserDepartments.AddAsync(membership);
@@ -195,6 +218,115 @@ namespace LabManagement.BLL.Implementations
                 {
                     dto.IsUserMember = membershipLookup.Contains(dto.DepartmentId);
                 }
+            }
+
+            return result;
+        }
+
+        public async Task<IEnumerable<DepartmentRegistrationDTO>> GetPendingRegistrationsAsync(int departmentId)
+        {
+            var department = await _unitOfWork.Departments.GetByIdAsync(departmentId);
+            if (department == null)
+            {
+                throw new NotFoundException("Department", departmentId);
+            }
+
+            var pendingRegistrations = await _unitOfWork.UserDepartments
+                .GetUserDepartmentsQueryable()
+                .Where(ud => ud.DepartmentId == departmentId && ud.Status == (int)Constant.RegistrationStatus.Pending)
+                .Include(ud => ud.User)
+                .Include(ud => ud.Department)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return pendingRegistrations.Select(ud => new DepartmentRegistrationDTO
+            {
+                UserId = ud.UserId,
+                UserName = ud.User.Name,
+                Email = ud.User.Email,
+                DepartmentId = ud.DepartmentId,
+                DepartmentName = ud.Department.Name,
+                CreatedAt = ud.CreatedAt,
+                Status = ud.Status,
+                StatusText = ((Constant.RegistrationStatus)ud.Status).ToString()
+            });
+        }
+
+        public async Task<bool> ApproveOrRejectRegistrationAsync(int departmentId, int userId, bool approve)
+        {
+            var membership = await _unitOfWork.UserDepartments.GetMembershipAsync(userId, departmentId);
+            if (membership == null)
+            {
+                throw new NotFoundException("Registration request not found");
+            }
+
+            if (membership.Status != (int)Constant.RegistrationStatus.Pending)
+            {
+                throw new BadRequestException("This registration request has already been processed");
+            }
+
+            if (approve)
+            {
+                // Check if user already has max departments (only count approved ones)
+                var approvedCount = await _unitOfWork.UserDepartments
+                    .GetUserDepartmentsQueryable()
+                    .Where(ud => ud.UserId == userId && ud.Status == (int)Constant.RegistrationStatus.Approved)
+                    .CountAsync();
+
+                if (approvedCount >= Constant.MaxDepartmentsPerMember)
+                {
+                    throw new BadRequestException($"User already has {Constant.MaxDepartmentsPerMember} approved department memberships");
+                }
+
+                membership.Status = (int)Constant.RegistrationStatus.Approved;
+            }
+            else
+            {
+                membership.Status = (int)Constant.RegistrationStatus.Rejected;
+            }
+
+            await _unitOfWork.UserDepartments.UpdateAsync(membership);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IEnumerable<DepartmentDTO>> GetRegisterableDepartmentsAsync(int userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new NotFoundException("User", userId);
+            }
+
+            // Get all departments that user has already registered to (any status)
+            var userDepartmentIds = await _unitOfWork.UserDepartments
+                .GetUserDepartmentsQueryable()
+                .Where(ud => ud.UserId == userId)
+                .Select(ud => ud.DepartmentId)
+                .ToListAsync();
+
+            // Check if user has reached the limit
+            var approvedCount = await _unitOfWork.UserDepartments
+                .GetUserDepartmentsQueryable()
+                .Where(ud => ud.UserId == userId && ud.Status == (int)Constant.RegistrationStatus.Approved)
+                .CountAsync();
+
+            // Get departments that:
+            // - Are NOT public (IsPublic = false)
+            // - User has NOT already registered to
+            // - Only if user hasn't reached the department limit
+            var departments = await _unitOfWork.Departments
+                .GetDepartmentsQueryable()
+                .Where(d => !d.IsPublic && !userDepartmentIds.Contains(d.DepartmentId))
+                .AsNoTracking()
+                .ToListAsync();
+
+            var result = _mapper.Map<List<DepartmentDTO>>(departments);
+            
+            // Add a flag indicating if user can still register
+            foreach (var dto in result)
+            {
+                dto.CanRegister = approvedCount < Constant.MaxDepartmentsPerMember;
             }
 
             return result;
