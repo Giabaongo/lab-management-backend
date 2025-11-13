@@ -7,5 +7,6 @@ namespace LabManagement.BLL.DTOs
         public string? Description { get; set; }
         public bool IsPublic { get; set; }
         public bool IsUserMember { get; set; }
+        public bool CanRegister { get; set; } = true;
     }
 }

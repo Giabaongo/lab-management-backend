@@ -12,5 +12,12 @@
             SecurityLab = 3,
             Member = 4
         }
+
+        public enum RegistrationStatus
+        {
+            Pending = 0,
+            Approved = 1,
+            Rejected = 2
+        }
     }
 }
