@@ -67,9 +67,11 @@ Filtering rules (implemented in `ApplyVisibilityFilter`):
 
 `BookingController` now enforces the same visibility rules:
 
-- `GET /api/bookings/available-slots` requires the caller to have access to the requested lab (public department, registered department, or they manage the lab). Members cannot inspect slots for unauthorized labs.
-- `POST /api/bookings` reuses this guard and also forces members to book only for themselves. Elevated roles (Admin/SchoolManager) bypass the filter and can book on behalf of others.
+- `GET /api/bookings/available-slots` (và `POST /api/bookings`) yêu cầu người gọi có quyền với lab (department public, đã đăng ký, hoặc là LabManager quản lý lab).
+- `POST /api/bookings` tái sử dụng guard và buộc member chỉ đặt cho chính họ. Elevated roles (Admin/SchoolManager) vẫn có thể đặt hộ.
+- Mọi thao tác booking đều kiểm chứng `ZoneId` thuộc đúng `Lab`, tránh việc đặt nhầm khu vực.
+- Quota department được áp dụng cả cho booking: member chỉ có thể đồng thời tham gia tối đa `Constant.MaxDepartmentsPerMember` departments (bao gồm `user_departments` + các booking tương lai). Nếu đã chạm quota, họ cần hủy booking/ rút khỏi department trước khi đặt lab ở department mới.
 
 This ensures the end-to-end experience matches the original intent: members only interact with labs that belong to their registered or public departments.
 
-With these changes in place, members can self-manage department access (up to two departments), lab listings automatically respect visibility rules, and booking endpoints enforce the same constraints. Admins retain full control via the CRUD endpoints.
+With these changes in place, members can self-manage department access (up to two departments), lab listings automatically respect visibility rules, and booking endpoints enforce the same constraints (bao gồm quota & zone validation). Admins retain full control via the CRUD endpoints.
