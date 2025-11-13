@@ -9,15 +9,21 @@ public partial class Lab
 
     public string Name { get; set; } = null!;
 
-    public int DepartmentId { get; set; }
-
     public int ManagerId { get; set; }
 
     public string? Location { get; set; }
 
     public string? Description { get; set; }
 
+    public int DepartmentId { get; set; }
+
+    public bool IsOpen { get; set; }
+
+    public int Status { get; set; }
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual Department Department { get; set; } = null!;
 
     public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
 
@@ -28,6 +34,4 @@ public partial class Lab
     public virtual User Manager { get; set; } = null!;
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
-
-    public virtual Department Department { get; set; } = null!;
 }

@@ -63,4 +63,15 @@ Filtering rules (implemented in `ApplyVisibilityFilter`):
 3. Update clients to consume the new DTO fields and call department APIs for member registration.
 4. Ensure JWT tokens include `UserId` and `Role` claims (already required by controllers).
 
-With these changes in place, members can self-manage department access (up to two departments), and lab listings automatically respect visibility rules. Admins retain full control via the CRUD endpoints.
+## 6. Booking Enforcement
+
+`BookingController` now enforces the same visibility rules:
+
+- `GET /api/bookings/available-slots` (và `POST /api/bookings`) yêu cầu người gọi có quyền với lab (department public, đã đăng ký, hoặc là LabManager quản lý lab).
+- `POST /api/bookings` tái sử dụng guard và buộc member chỉ đặt cho chính họ. Elevated roles (Admin/SchoolManager) vẫn có thể đặt hộ.
+- Mọi thao tác booking đều kiểm chứng `ZoneId` thuộc đúng `Lab`, tránh việc đặt nhầm khu vực.
+- Quota department được áp dụng cả cho booking: member chỉ có thể đồng thời tham gia tối đa `Constant.MaxDepartmentsPerMember` departments (bao gồm `user_departments` + các booking tương lai). Nếu đã chạm quota, họ cần hủy booking/ rút khỏi department trước khi đặt lab ở department mới.
+
+This ensures the end-to-end experience matches the original intent: members only interact with labs that belong to their registered or public departments.
+
+With these changes in place, members can self-manage department access (up to two departments), lab listings automatically respect visibility rules, and booking endpoints enforce the same constraints (bao gồm quota & zone validation). Admins retain full control via the CRUD endpoints.

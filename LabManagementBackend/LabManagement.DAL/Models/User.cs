@@ -19,7 +19,7 @@ public partial class User
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    public virtual ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();
+    public virtual ICollection<EventParticipants> EventParticipants { get; set; } = new List<EventParticipants>();
 
     public virtual ICollection<LabEvent> LabEvents { get; set; } = new List<LabEvent>();
 

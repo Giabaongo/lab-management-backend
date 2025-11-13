@@ -177,5 +177,74 @@ namespace LabManagement.API.Controllers
                 exists ? "Lab exists" : "Lab does not exist"
             ));
         }
+
+        /// <summary>
+        /// Check if lab is open and accepting bookings
+        /// </summary>
+        /// <param name="id">Lab ID</param>
+        /// <returns>Boolean result indicating if lab is open</returns>
+        [HttpGet("{id}/is-open")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<object>>> IsLabOpen(int id)
+        {
+            var isOpen = await _labService.IsLabOpenAsync(id);
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { labId = id, isOpen },
+                isOpen ? "Lab is open and accepting bookings" : "Lab is not available for bookings"
+            ));
+        }
+
+        /// <summary>
+        /// Toggle lab open/close status
+        /// </summary>
+        /// <param name="id">Lab ID</param>
+        /// <param name="isOpen">New open status</param>
+        /// <returns>Success result</returns>
+        [HttpPatch("{id}/toggle-open")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<ActionResult<ApiResponse<object>>> ToggleLabStatus(int id, [FromBody] bool isOpen)
+        {
+            var success = await _labService.ToggleLabStatusAsync(id, isOpen);
+            if (!success)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("Lab not found"));
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { labId = id, isOpen },
+                isOpen ? "Lab opened successfully" : "Lab closed successfully"
+            ));
+        }
+
+        /// <summary>
+        /// Update lab status (Active, Closed, Maintenance, Inactive)
+        /// </summary>
+        /// <param name="id">Lab ID</param>
+        /// <param name="status">New status (1=Active, 2=Closed, 3=Maintenance, 4=Inactive)</param>
+        /// <returns>Success result</returns>
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
+        public async Task<ActionResult<ApiResponse<object>>> UpdateLabStatus(int id, [FromBody] int status)
+        {
+            var success = await _labService.UpdateLabStatusAsync(id, status);
+            if (!success)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("Lab not found"));
+            }
+
+            var statusText = status switch
+            {
+                1 => "Active",
+                2 => "Closed",
+                3 => "Maintenance",
+                4 => "Inactive",
+                _ => "Unknown"
+            };
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { labId = id, status, statusText },
+                $"Lab status updated to {statusText}"
+            ));
+        }
     }
 }

@@ -28,5 +28,10 @@ namespace LabManagement.BLL.DTOs
         [Required]
         [StringLength(100)]
         public string location { get; set; } = null!;
+
+        // Default to open and active when creating new lab
+        public bool isOpen { get; set; } = true;
+        
+        public int status { get; set; } = 1; // 1 = Active
     }
 }

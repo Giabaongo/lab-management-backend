@@ -15,5 +15,8 @@ namespace LabManagement.BLL.Interfaces
         Task<LabDTO?> UpdateLabAsync(UpdateLabDTO updateLabDTO, string name);
         Task<bool> DeleteLabAsync(int id);
         Task<bool> LabExistsAsync(string name);
+        Task<bool> IsLabOpenAsync(int labId);
+        Task<bool> ToggleLabStatusAsync(int labId, bool isOpen);
+        Task<bool> UpdateLabStatusAsync(int labId, int status);
     }
 }
