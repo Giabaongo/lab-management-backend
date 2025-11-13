@@ -17,11 +17,18 @@ namespace LabManagement.BLL.DTOs
         public int mananger_Id { get; set; }
 
         [Required]
+        public int departmentId { get; set; }
+
+        [Required]
         [StringLength(100)]
         public string description { get; set; } = null!;
 
         [Required]
         [StringLength(100)]
         public string location { get; set; } = null!;
+
+        public bool? isOpen { get; set; }
+        
+        public int? status { get; set; }
     }
 }

@@ -1,9 +1,11 @@
+using LabManagement.API.Hubs;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LabManagement.API.Controllers
 {
@@ -15,10 +17,14 @@ namespace LabManagement.API.Controllers
     public class SecurityLogController : ControllerBase
     {
         private readonly ISecurityLogService _securityLogService;
+        private readonly IHubContext<SecurityLogHub> _securityLogHubContext;
 
-        public SecurityLogController(ISecurityLogService securityLogService)
+        public SecurityLogController(
+            ISecurityLogService securityLogService,
+            IHubContext<SecurityLogHub> securityLogHubContext)
         {
             _securityLogService = securityLogService;
+            _securityLogHubContext = securityLogHubContext;
         }
 
         /// <summary>
@@ -75,6 +81,10 @@ namespace LabManagement.API.Controllers
                 throw new BadRequestException("Invalid security log data");
 
             var securityLog = await _securityLogService.CreateSecurityLogAsync(createSecurityLogDTO);
+            
+            // Send real-time security alert
+            await NotifySecurityAlertAsync(securityLog);
+            
             return CreatedAtAction(
                 nameof(GetSecurityLogById),
                 new { id = securityLog.LogId },
@@ -119,6 +129,25 @@ namespace LabManagement.API.Controllers
                 throw new NotFoundException("Security Log", id);
 
             return Ok(ApiResponse<object>.SuccessResponse(new { }, "Security log deleted successfully"));
+        }
+
+        private async Task NotifySecurityAlertAsync(SecurityLogDTO securityLog)
+        {
+            var alertData = new
+            {
+                logId = securityLog.LogId,
+                eventId = securityLog.EventId,
+                securityId = securityLog.SecurityId,
+                actionType = securityLog.ActionType,
+                notes = securityLog.Notes,
+                photoUrl = securityLog.PhotoUrl,
+                loggedAt = securityLog.LoggedAt,
+                severity = securityLog.ActionType == 2 ? "Critical" : "Warning" // Adjust based on your action types
+            };
+
+            // Notify security team (Admin, SchoolManager, SecurityLab)
+            await _securityLogHubContext.Clients.Group(SecurityLogHub.GetSecurityTeamGroupName())
+                .SendAsync("SecurityAlert", alertData);
         }
     }
 }
