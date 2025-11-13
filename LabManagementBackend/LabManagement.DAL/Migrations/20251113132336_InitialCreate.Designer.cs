@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LabManagement.DAL.Migrations
 {
     [DbContext(typeof(LabManagementDbContext))]
-    [Migration("20251113120955_InitialFromDatabase")]
-    partial class InitialFromDatabase
+    [Migration("20251113132336_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -188,7 +188,7 @@ namespace LabManagement.DAL.Migrations
                     b.ToTable("equipment", (string)null);
                 });
 
-            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipant", b =>
+            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipants", b =>
                 {
                     b.Property<int>("EventId")
                         .HasColumnType("int")
@@ -636,7 +636,7 @@ namespace LabManagement.DAL.Migrations
                     b.Navigation("Lab");
                 });
 
-            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipant", b =>
+            modelBuilder.Entity("LabManagement.DAL.Models.EventParticipants", b =>
                 {
                     b.HasOne("LabManagement.DAL.Models.LabEvent", "Event")
                         .WithMany("EventParticipants")
