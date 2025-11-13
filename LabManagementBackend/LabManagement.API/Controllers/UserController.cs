@@ -12,6 +12,7 @@ namespace LabManagement.API.Controllers
     /// <summary>
     /// User management endpoints
     /// </summary>
+    [AllowAnonymous]
     [ApiController]
     [Route("api/users")]
     public class UserController : ControllerBase
