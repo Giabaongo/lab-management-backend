@@ -343,6 +343,24 @@ namespace LabManagement.BLL.Implementations
                 throw new NotFoundException("Lab", labId);
             }
 
+            // Check if lab is open and active
+            if (!lab.IsOpen)
+            {
+                throw new BadRequestException("This lab is currently closed and not accepting bookings");
+            }
+
+            if (lab.Status != 1) // 1 = Active
+            {
+                var statusMessage = lab.Status switch
+                {
+                    2 => "closed",
+                    3 => "under maintenance",
+                    4 => "inactive",
+                    _ => "unavailable"
+                };
+                throw new BadRequestException($"This lab is {statusMessage} and not accepting bookings");
+            }
+
             if (IsElevatedRole(requesterRole))
             {
                 return lab;
