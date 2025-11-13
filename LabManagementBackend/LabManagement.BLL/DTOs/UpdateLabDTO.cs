@@ -26,5 +26,9 @@ namespace LabManagement.BLL.DTOs
         [Required]
         [StringLength(100)]
         public string location { get; set; } = null!;
+
+        public bool? isOpen { get; set; }
+        
+        public int? status { get; set; }
     }
 }

@@ -47,46 +47,6 @@ namespace LabManagement.DAL.Migrations
                     b.ToTable("activity_types", (string)null);
                 });
 
-            modelBuilder.Entity("LabManagement.DAL.Models.Department", b =>
-                {
-                    b.Property<int>("DepartmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("department_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("description");
-
-                    b.Property<bool>("IsPublic")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasColumnName("is_public")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("name");
-
-                    b.HasKey("DepartmentId")
-                        .HasName("PK__departme__C2232422BA81382F");
-
-                    b.ToTable("departments", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            DepartmentId = 1,
-                            Description = "Default department for existing labs",
-                            IsPublic = true,
-                            Name = "General"
-                        });
-                });
-
             modelBuilder.Entity("LabManagement.DAL.Models.Booking", b =>
                 {
                     b.Property<int>("BookingId")
@@ -150,6 +110,35 @@ namespace LabManagement.DAL.Migrations
                     b.HasIndex(new[] { "ZoneId" }, "IX_bookings_zone_id");
 
                     b.ToTable("bookings", (string)null);
+                });
+
+            modelBuilder.Entity("LabManagement.DAL.Models.Department", b =>
+                {
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_public");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("DepartmentId")
+                        .HasName("PK__departme__C2232422");
+
+                    b.ToTable("departments", (string)null);
                 });
 
             modelBuilder.Entity("LabManagement.DAL.Models.Equipment", b =>
@@ -227,18 +216,26 @@ namespace LabManagement.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LabId"));
 
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("department_id");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
+
+                    b.Property<bool>("IsOpen")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_open");
 
                     b.Property<string>("Location")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("location");
-
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("department_id");
 
                     b.Property<int>("ManagerId")
                         .HasColumnType("int")
@@ -249,6 +246,12 @@ namespace LabManagement.DAL.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("status");
 
                     b.HasKey("LabId")
                         .HasName("PK__labs__66DE64DB381C94E8");
@@ -585,7 +588,7 @@ namespace LabManagement.DAL.Migrations
                         .HasDefaultValueSql("(sysdatetime())");
 
                     b.HasKey("UserId", "DepartmentId")
-                        .HasName("PK__user_dep__1EDFFB1951EA0F2F");
+                        .HasName("PK__user_dep__1EDFFB19");
 
                     b.HasIndex(new[] { "DepartmentId" }, "IX_user_departments_department_id");
 
@@ -774,12 +777,14 @@ namespace LabManagement.DAL.Migrations
                     b.HasOne("LabManagement.DAL.Models.Department", "Department")
                         .WithMany("UserDepartments")
                         .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK__user_depa__depar__74AE549C");
 
                     b.HasOne("LabManagement.DAL.Models.User", "User")
                         .WithMany("UserDepartments")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK__user_depa__user___73BA3083");
 

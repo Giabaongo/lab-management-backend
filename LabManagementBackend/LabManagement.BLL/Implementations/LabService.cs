@@ -170,5 +170,51 @@ namespace LabManagement.BLL.Implementations
                 l.ManagerId == requesterId ||
                 l.Department.UserDepartments.Any(ud => ud.UserId == requesterId));
         }
+
+        public async Task<bool> IsLabOpenAsync(int labId)
+        {
+            var lab = await _unitOfWork.Labs.GetByIdAsync(labId);
+            if (lab == null)
+            {
+                throw new NotFoundException("Lab", labId);
+            }
+
+            // Lab must be open AND active (status = 1)
+            return lab.IsOpen && lab.Status == 1;
+        }
+
+        public async Task<bool> ToggleLabStatusAsync(int labId, bool isOpen)
+        {
+            var lab = await _unitOfWork.Labs.GetByIdAsync(labId);
+            if (lab == null)
+            {
+                return false;
+            }
+
+            lab.IsOpen = isOpen;
+            await _unitOfWork.Labs.UpdateAsync(lab);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateLabStatusAsync(int labId, int status)
+        {
+            // Validate status value
+            if (status < 1 || status > 4)
+            {
+                throw new BadRequestException("Status must be between 1 (Active) and 4 (Inactive)");
+            }
+
+            var lab = await _unitOfWork.Labs.GetByIdAsync(labId);
+            if (lab == null)
+            {
+                return false;
+            }
+
+            lab.Status = status;
+            await _unitOfWork.Labs.UpdateAsync(lab);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
     }
 }

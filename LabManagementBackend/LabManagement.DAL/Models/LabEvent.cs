@@ -31,7 +31,7 @@ public partial class LabEvent
 
     public virtual ActivityType ActivityType { get; set; } = null!;
 
-    public virtual ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();
+    public virtual ICollection<EventParticipants> EventParticipants { get; set; } = new List<EventParticipants>();
 
     public virtual Lab Lab { get; set; } = null!;
 

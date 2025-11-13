@@ -16,5 +16,7 @@ namespace LabManagement.BLL.DTOs
         public int departmentId { get; set; }
         public string departmentName { get; set; } = null!;
         public bool isPublic { get; set; }
+        public bool isOpen { get; set; }
+        public int status { get; set; }
     }
 }
