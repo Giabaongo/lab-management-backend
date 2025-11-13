@@ -1,10 +1,12 @@
-﻿using LabManagement.BLL.DTOs;
+﻿using LabManagement.API.Hubs;
+using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Constants;
 using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LabManagement.API.Controllers
 {
@@ -16,13 +18,18 @@ namespace LabManagement.API.Controllers
     public class EquipmentController : ControllerBase
     {
         private readonly IEquipmentService _equipmentService;
+        private readonly IHubContext<EquipmentHub> _equipmentHubContext;
+        
         /// <summary>
         /// Get all equipment (SchoolManager and Admin only)
         /// </summary>
         /// <returns>List of users</returns>>
-        public EquipmentController(IEquipmentService equipmentService)
+        public EquipmentController(
+            IEquipmentService equipmentService,
+            IHubContext<EquipmentHub> equipmentHubContext)
         {
             _equipmentService = equipmentService;
+            _equipmentHubContext = equipmentHubContext;
         }
 
         [HttpGet]
@@ -69,7 +76,43 @@ namespace LabManagement.API.Controllers
             var updatedEquipment = await _equipmentService.UpdateEquipmentAsync(id, updateEquipmentDTO);
             if (updatedEquipment == null)
                 throw new NotFoundException("Equipment not found");
+            
+            // Notify if status changed to broken or maintenance
+            if (updatedEquipment.Status == 2 || updatedEquipment.Status == 3) // Broken or Maintenance
+            {
+                await NotifyEquipmentStatusChangeAsync(updatedEquipment);
+            }
+            
             return Ok(ApiResponse<EquipmentDTO>.SuccessResponse(updatedEquipment, "Equipment updated successfully"));
+        }
+
+        private async Task NotifyEquipmentStatusChangeAsync(EquipmentDTO equipment)
+        {
+            // Notify all managers
+            await _equipmentHubContext.Clients.Group(EquipmentHub.GetAllManagersGroupName())
+                .SendAsync("EquipmentStatusChanged", new
+                {
+                    equipmentId = equipment.EquipmentId,
+                    equipmentName = equipment.Name,
+                    equipmentCode = equipment.Code,
+                    labId = equipment.LabId,
+                    status = equipment.Status,
+                    statusText = equipment.Status == 2 ? "Broken" : "Under Maintenance",
+                    timestamp = DateTime.UtcNow
+                });
+
+            // Also notify specific lab managers
+            await _equipmentHubContext.Clients.Group(EquipmentHub.GetLabManagerGroupName(equipment.LabId))
+                .SendAsync("EquipmentStatusChanged", new
+                {
+                    equipmentId = equipment.EquipmentId,
+                    equipmentName = equipment.Name,
+                    equipmentCode = equipment.Code,
+                    labId = equipment.LabId,
+                    status = equipment.Status,
+                    statusText = equipment.Status == 2 ? "Broken" : "Under Maintenance",
+                    timestamp = DateTime.UtcNow
+                });
         }
 
         /// <summary>

@@ -85,7 +85,13 @@ namespace LabManagement.API
                 };
             });
             builder.Services.AddControllers();
-            builder.Services.AddSignalR();
+            
+            // Add SignalR with detailed logging
+            builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true; // Enable detailed error messages for debugging
+            });
+            
             builder.Services.AddEndpointsApiExplorer();
 
             // Add CORS - Allow Frontend to call API and SignalR
@@ -183,7 +189,13 @@ namespace LabManagement.API
 
 
             app.MapControllers();
+            
+            // Map SignalR Hubs
             app.MapHub<BookingHub>("/hubs/booking");
+            app.MapHub<EquipmentHub>("/hubs/equipment");
+            app.MapHub<SecurityLogHub>("/hubs/security");
+            app.MapHub<LabEventHub>("/hubs/lab-events");
+            app.MapHub<NotificationHub>("/hubs/notifications");
 
             app.Run();
         }
