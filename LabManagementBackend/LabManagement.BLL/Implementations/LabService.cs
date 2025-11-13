@@ -179,8 +179,8 @@ namespace LabManagement.BLL.Implementations
                 throw new NotFoundException("Lab", labId);
             }
 
-            // Lab must be open AND active (status = 1)
-            return lab.IsOpen && lab.Status == 1;
+            // IsOpen is just door status indicator, only check if lab is active for booking
+            return lab.Status == 1;
         }
 
         public async Task<bool> ToggleLabStatusAsync(int labId, bool isOpen)

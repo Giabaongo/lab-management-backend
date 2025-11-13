@@ -29,8 +29,8 @@ namespace LabManagement.BLL.DTOs
         [StringLength(100)]
         public string location { get; set; } = null!;
 
-        // Default to open and active when creating new lab
-        public bool isOpen { get; set; } = true;
+        // Default to closed (door status) but active (can accept bookings)
+        public bool isOpen { get; set; } = false;
         
         public int status { get; set; } = 1; // 1 = Active
     }

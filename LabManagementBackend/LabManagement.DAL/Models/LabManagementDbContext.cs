@@ -262,7 +262,7 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnName("department_id");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.IsOpen)
-                .HasDefaultValue(true)
+                .HasDefaultValue(false)
                 .HasColumnName("is_open");
             entity.Property(e => e.Location)
                 .HasMaxLength(255)
