@@ -223,12 +223,24 @@ namespace LabManagement.BLL.Implementations
             return result;
         }
 
-        public async Task<IEnumerable<DepartmentRegistrationDTO>> GetPendingRegistrationsAsync(int departmentId)
+        public async Task<IEnumerable<DepartmentRegistrationDTO>> GetPendingRegistrationsAsync(int departmentId, int requesterId, Constant.UserRole requesterRole)
         {
             var department = await _unitOfWork.Departments.GetByIdAsync(departmentId);
             if (department == null)
             {
                 throw new NotFoundException("Department", departmentId);
+            }
+
+            // If LabManager, verify they manage a lab in this department
+            if (requesterRole == Constant.UserRole.LabManager)
+            {
+                var managesLabInDepartment = await _unitOfWork.Labs
+                    .ExistsAsync(l => l.ManagerId == requesterId && l.DepartmentId == departmentId);
+                
+                if (!managesLabInDepartment)
+                {
+                    throw new UnauthorizedException("You can only view registration requests for departments where you manage a lab");
+                }
             }
 
             var pendingRegistrations = await _unitOfWork.UserDepartments
@@ -252,9 +264,9 @@ namespace LabManagement.BLL.Implementations
             });
         }
 
-        public async Task<bool> ApproveOrRejectRegistrationAsync(int departmentId, int userId, bool approve)
+        public async Task<bool> ApproveOrRejectRegistrationAsync(int departmentId, int targetUserId, bool approve, int requesterId, Constant.UserRole requesterRole)
         {
-            var membership = await _unitOfWork.UserDepartments.GetMembershipAsync(userId, departmentId);
+            var membership = await _unitOfWork.UserDepartments.GetMembershipAsync(targetUserId, departmentId);
             if (membership == null)
             {
                 throw new NotFoundException("Registration request not found");
@@ -265,12 +277,24 @@ namespace LabManagement.BLL.Implementations
                 throw new BadRequestException("This registration request has already been processed");
             }
 
+            // If LabManager, verify they manage a lab in this department
+            if (requesterRole == Constant.UserRole.LabManager)
+            {
+                var managesLabInDepartment = await _unitOfWork.Labs
+                    .ExistsAsync(l => l.ManagerId == requesterId && l.DepartmentId == departmentId);
+                
+                if (!managesLabInDepartment)
+                {
+                    throw new UnauthorizedException("You can only approve/reject registrations for departments where you manage a lab");
+                }
+            }
+
             if (approve)
             {
                 // Check if user already has max departments (only count approved ones)
                 var approvedCount = await _unitOfWork.UserDepartments
                     .GetUserDepartmentsQueryable()
-                    .Where(ud => ud.UserId == userId && ud.Status == (int)Constant.RegistrationStatus.Approved)
+                    .Where(ud => ud.UserId == targetUserId && ud.Status == (int)Constant.RegistrationStatus.Approved)
                     .CountAsync();
 
                 if (approvedCount >= Constant.MaxDepartmentsPerMember)
