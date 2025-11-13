@@ -28,7 +28,9 @@ namespace LabManagement.BLL.Implementations
 
         public async Task<BookingDTO> CreateBookingAsync(CreateBookingDTO createBookingDTO, int requesterId, Constant.UserRole requesterRole)
         {
-            await EnsureLabAccessAsync(createBookingDTO.LabId, requesterId, requesterRole);
+            var lab = await EnsureLabAccessAsync(createBookingDTO.LabId, requesterId, requesterRole);
+            await EnsureDepartmentQuotaForBookingAsync(lab.DepartmentId, requesterId, requesterRole);
+            await EnsureZoneBelongsToLabAsync(createBookingDTO.ZoneId, lab.LabId);
 
             if (requesterRole == Constant.UserRole.Member && createBookingDTO.UserId != requesterId)
             {
@@ -42,8 +44,13 @@ namespace LabManagement.BLL.Implementations
             return _mapper.Map<BookingDTO>(booking);
         }
 
-        public async Task<bool> DeleteBookingAsync(int id)
+        public async Task<bool> DeleteBookingAsync(int id, int requesterId, Constant.UserRole requesterRole)
         {
+            if (!IsElevatedRole(requesterRole))
+            {
+                throw new UnauthorizedException("Only administrators can delete bookings");
+            }
+
             var booking = await _unitOfWork.Bookings.GetByIdAsync(id);
             if (booking == null) return false;
 
@@ -52,15 +59,31 @@ namespace LabManagement.BLL.Implementations
             return true;
         }
 
-        public async Task<IEnumerable<BookingDTO>> GetAllBookingsAsync()
+        public async Task<IEnumerable<BookingDTO>> GetAllBookingsAsync(int requesterId, Constant.UserRole requesterRole)
         {
-            var bookings = await _unitOfWork.Bookings.GetAllAsync();
+            var query = _unitOfWork.Bookings
+                .GetBookingsQueryable()
+                .Include(b => b.Lab)
+                    .ThenInclude(l => l.Department)
+                .Include(b => b.Zone)
+                .AsNoTracking();
+
+            query = ApplyBookingVisibilityFilter(query, requesterId, requesterRole);
+
+            var bookings = await query.ToListAsync();
             return _mapper.Map<IEnumerable<BookingDTO>>(bookings);
         }
 
-        public async Task<PagedResult<BookingDTO>> GetBookingsAsync(QueryParameters queryParams)
+        public async Task<PagedResult<BookingDTO>> GetBookingsAsync(QueryParameters queryParams, int requesterId, Constant.UserRole requesterRole)
         {
-            var query = _unitOfWork.Bookings.GetBookingsQueryable();
+            var query = _unitOfWork.Bookings
+                .GetBookingsQueryable()
+                .Include(b => b.Lab)
+                    .ThenInclude(l => l.Department)
+                .Include(b => b.Zone)
+                .AsNoTracking();
+
+            query = ApplyBookingVisibilityFilter(query, requesterId, requesterRole);
 
             if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
             {
@@ -69,9 +92,8 @@ namespace LabManagement.BLL.Implementations
                     (b.Notes != null && b.Notes.ToLower().Contains(term)) ||
                     b.BookingId.ToString().Contains(term) ||
                     b.UserId.ToString().Contains(term) ||
-                    b.LabId.ToString().Contains(term) ||
-                    b.ZoneId.ToString().Contains(term) ||
-                    b.Status.ToString().Contains(term));
+                    b.Lab.Name.ToLower().Contains(term) ||
+                    b.Zone.Name.ToLower().Contains(term));
             }
 
             if (!string.IsNullOrWhiteSpace(queryParams.SortBy))
@@ -83,8 +105,8 @@ namespace LabManagement.BLL.Implementations
                     "status" => queryParams.IsDescending ? query.OrderByDescending(b => b.Status) : query.OrderBy(b => b.Status),
                     "createdat" => queryParams.IsDescending ? query.OrderByDescending(b => b.CreatedAt) : query.OrderBy(b => b.CreatedAt),
                     "userid" => queryParams.IsDescending ? query.OrderByDescending(b => b.UserId) : query.OrderBy(b => b.UserId),
-                    "labid" => queryParams.IsDescending ? query.OrderByDescending(b => b.LabId) : query.OrderBy(b => b.LabId),
-                    "zoneid" => queryParams.IsDescending ? query.OrderByDescending(b => b.ZoneId) : query.OrderBy(b => b.ZoneId),
+                    "lab" => queryParams.IsDescending ? query.OrderByDescending(b => b.Lab.Name) : query.OrderBy(b => b.Lab.Name),
+                    "zone" => queryParams.IsDescending ? query.OrderByDescending(b => b.Zone.Name) : query.OrderBy(b => b.Zone.Name),
                     _ => query.OrderBy(b => b.BookingId)
                 };
             }
@@ -104,26 +126,66 @@ namespace LabManagement.BLL.Implementations
             };
         }
 
-        public async Task<BookingDTO?> GetBookingByIdAsync(int id)
+        public async Task<BookingDTO?> GetBookingByIdAsync(int id, int requesterId, Constant.UserRole requesterRole)
         {
-            var booking = await _unitOfWork.Bookings.GetByIdAsync(id);
-            return booking == null ? null : _mapper.Map<BookingDTO>(booking);
+            var booking = await _unitOfWork.Bookings
+                .GetBookingsQueryable()
+                .Include(b => b.Lab)
+                    .ThenInclude(l => l.Department)
+                .Include(b => b.Zone)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return null;
+            }
+
+            EnsureBookingAccess(booking, requesterId, requesterRole);
+            return _mapper.Map<BookingDTO>(booking);
         }
 
-        public async Task<bool> BookingExistsAsync(int id)
+        public async Task<BookingDTO?> UpdateBookingAsync(int id, UpdateBookingDTO updateBookingDTO, int requesterId, Constant.UserRole requesterRole)
         {
-            return await _unitOfWork.Bookings.ExistsAsync(b => b.BookingId == id);
-        }
+            var booking = await _unitOfWork.Bookings
+                .GetBookingsQueryable()
+                .Include(b => b.Lab)
+                    .ThenInclude(l => l.Department)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
 
-        public async Task<BookingDTO?> UpdateBookingAsync(int id, UpdateBookingDTO updateBookingDTO)
-        {
-            var booking = await _unitOfWork.Bookings.GetByIdAsync(id);
             if (booking == null) return null;
 
+            EnsureBookingAccess(booking, requesterId, requesterRole);
+
+            if (updateBookingDTO.UserId.HasValue && updateBookingDTO.UserId.Value != booking.UserId && !IsElevatedRole(requesterRole))
+            {
+                throw new UnauthorizedException("Only administrators can reassign bookings to another user");
+            }
+
+            var targetLabId = updateBookingDTO.LabId ?? booking.LabId;
+            Lab? updatedLab = null;
+
+            if (updateBookingDTO.LabId.HasValue && updateBookingDTO.LabId.Value != booking.LabId)
+            {
+                updatedLab = await EnsureLabAccessAsync(updateBookingDTO.LabId.Value, requesterId, requesterRole);
+                await EnsureDepartmentQuotaForBookingAsync(updatedLab.DepartmentId, requesterId, requesterRole);
+            }
+
+            if (updateBookingDTO.ZoneId.HasValue)
+            {
+                await EnsureZoneBelongsToLabAsync(updateBookingDTO.ZoneId.Value, targetLabId);
+            }
+
             _mapper.Map(updateBookingDTO, booking);
+
+            if (updatedLab != null)
+            {
+                booking.Lab = updatedLab;
+            }
+
             await _unitOfWork.Bookings.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
-            
+
             return _mapper.Map<BookingDTO>(booking);
         }
 
@@ -144,7 +206,9 @@ namespace LabManagement.BLL.Implementations
             if (query.DayEnd <= query.DayStart)
                 throw new BadRequestException("DayEnd must be after DayStart.");
 
-            await EnsureLabAccessAsync(query.LabId, requesterId, requesterRole);
+            var lab = await EnsureLabAccessAsync(query.LabId, requesterId, requesterRole);
+            await EnsureDepartmentQuotaForBookingAsync(lab.DepartmentId, requesterId, requesterRole);
+            await EnsureZoneBelongsToLabAsync(query.ZoneId, lab.LabId);
 
             var slotDuration = TimeSpan.FromMinutes(query.SlotDurationMinutes);
             if (slotDuration >= query.DayEnd - query.DayStart)
@@ -180,7 +244,92 @@ namespace LabManagement.BLL.Implementations
                    role == Constant.UserRole.SchoolManager;
         }
 
-        private async Task EnsureLabAccessAsync(int labId, int requesterId, Constant.UserRole requesterRole)
+        private static IQueryable<Booking> ApplyBookingVisibilityFilter(IQueryable<Booking> query, int requesterId, Constant.UserRole requesterRole)
+        {
+            if (IsElevatedRole(requesterRole))
+            {
+                return query;
+            }
+
+            if (requesterRole == Constant.UserRole.LabManager)
+            {
+                return query.Where(b => b.UserId == requesterId || b.Lab.ManagerId == requesterId);
+            }
+
+            return query.Where(b => b.UserId == requesterId);
+        }
+
+        private void EnsureBookingAccess(Booking booking, int requesterId, Constant.UserRole requesterRole)
+        {
+            if (IsElevatedRole(requesterRole))
+            {
+                return;
+            }
+
+            if (requesterRole == Constant.UserRole.LabManager && booking.Lab.ManagerId == requesterId)
+            {
+                return;
+            }
+
+            if (booking.UserId != requesterId)
+            {
+                throw new UnauthorizedException("You do not have permission to view or modify this booking");
+            }
+        }
+
+        private async Task EnsureZoneBelongsToLabAsync(int zoneId, int labId)
+        {
+            var zone = await _unitOfWork.LabZones.GetByIdAsync(zoneId);
+            if (zone == null)
+            {
+                throw new NotFoundException("Lab zone", zoneId);
+            }
+
+            if (zone.LabId != labId)
+            {
+                throw new BadRequestException("Selected zone does not belong to the specified lab");
+            }
+        }
+
+        private async Task EnsureDepartmentQuotaForBookingAsync(int departmentId, int requesterId, Constant.UserRole requesterRole)
+        {
+            if (requesterRole != Constant.UserRole.Member)
+            {
+                return;
+            }
+
+            var membershipDepartments = await _unitOfWork.UserDepartments
+                .GetUserDepartmentsQueryable()
+                .Where(ud => ud.UserId == requesterId)
+                .Select(ud => ud.DepartmentId)
+                .ToListAsync();
+
+            var futureBookingDepartments = await _unitOfWork.Bookings
+                .GetBookingsQueryable()
+                .Include(b => b.Lab)
+                .AsNoTracking()
+                .Where(b => b.UserId == requesterId && b.EndTime >= DateTime.UtcNow)
+                .Select(b => b.Lab.DepartmentId)
+                .ToListAsync();
+
+            var departmentSet = new HashSet<int>(membershipDepartments);
+            foreach (var deptId in futureBookingDepartments)
+            {
+                departmentSet.Add(deptId);
+            }
+
+            if (!departmentSet.Contains(departmentId))
+            {
+                departmentSet.Add(departmentId);
+            }
+
+            if (departmentSet.Count > Constant.MaxDepartmentsPerMember)
+            {
+                throw new BadRequestException($"Members can only engage with up to {Constant.MaxDepartmentsPerMember} departments at a time. Please cancel an existing booking or unregister from a department before booking another lab.");
+            }
+        }
+
+        private async Task<Lab> EnsureLabAccessAsync(int labId, int requesterId, Constant.UserRole requesterRole)
         {
             var lab = await _unitOfWork.Labs
                 .GetLabsQueryable()
@@ -196,7 +345,7 @@ namespace LabManagement.BLL.Implementations
 
             if (IsElevatedRole(requesterRole))
             {
-                return;
+                return lab;
             }
 
             var hasAccess = lab.Department.IsPublic ||
@@ -207,6 +356,8 @@ namespace LabManagement.BLL.Implementations
             {
                 throw new UnauthorizedException("You do not have permission to access this lab");
             }
+
+            return lab;
         }
     }
 }

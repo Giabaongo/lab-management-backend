@@ -55,7 +55,8 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<IEnumerable<BookingDTO>>>> GetAllBookings()
         {
-            var bookings = await _bookingService.GetAllBookingsAsync();
+            var (userId, role) = GetRequesterContext();
+            var bookings = await _bookingService.GetAllBookingsAsync(userId, role);
             return Ok(ApiResponse<IEnumerable<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
         }
 
@@ -66,7 +67,8 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<PagedResult<BookingDTO>>>> GetBookingsPaged([FromQuery] QueryParameters queryParams)
         {
-            var bookings = await _bookingService.GetBookingsAsync(queryParams);
+            var (userId, role) = GetRequesterContext();
+            var bookings = await _bookingService.GetBookingsAsync(queryParams, userId, role);
             return Ok(ApiResponse<PagedResult<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
         }
 
@@ -94,7 +96,8 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<BookingDTO>>> GetBookingById(int id)
         {
-            var booking = await _bookingService.GetBookingByIdAsync(id);
+            var (userId, role) = GetRequesterContext();
+            var booking = await _bookingService.GetBookingByIdAsync(id, userId, role);
             if (booking == null)
             {
                 throw new NotFoundException("Booking", id);
@@ -143,11 +146,8 @@ namespace LabManagement.API.Controllers
             if (!ModelState.IsValid)
                 throw new BadRequestException("Invalid booking data");
 
-            // Check if booking exists
-            if (!await _bookingService.BookingExistsAsync(id))
-                throw new NotFoundException("Booking", id);
-
-            var booking = await _bookingService.UpdateBookingAsync(id, updateBookingDTO);
+            var (userId, role) = GetRequesterContext();
+            var booking = await _bookingService.UpdateBookingAsync(id, updateBookingDTO, userId, role);
             if (booking == null)
                 throw new NotFoundException("Booking", id);
 
@@ -163,7 +163,8 @@ namespace LabManagement.API.Controllers
         [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)}")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteBooking(int id)
         {
-            var result = await _bookingService.DeleteBookingAsync(id);
+            var (userId, role) = GetRequesterContext();
+            var result = await _bookingService.DeleteBookingAsync(id, userId, role);
             if (!result)
                 throw new NotFoundException("Booking", id);
 

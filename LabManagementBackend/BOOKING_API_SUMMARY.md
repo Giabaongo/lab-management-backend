@@ -12,14 +12,13 @@
 
 ### 3. Service Layer (LabManagement.BLL/)
 - **Interfaces/IBookingService.cs** - Interface cho booking service
-- **Implementations/BookingService.cs** - Implementation của booking service với các methods:
-  - GetAllBookingsAsync()
-  - GetBookingByIdAsync(int id)
-  - CreateBookingAsync(CreateBookingDTO, requesterId, requesterRole) *(kiểm tra quyền truy cập lab + buộc member đặt cho chính họ)*
-  - UpdateBookingAsync(int id, UpdateBookingDTO)
-  - DeleteBookingAsync(int id)
-  - BookingExistsAsync(int id)
-  - GetAvailableSlotsAsync(AvailableSlotQueryDTO, requesterId, requesterRole) *(chỉ trả slot cho lab mà người dùng có quyền xem)*
+- **Implementations/BookingService.cs** - Implementation với các methods đã được context-aware:
+  - `GetAllBookingsAsync(requesterId, role)` *(lọc kết quả theo quyền: Member chỉ thấy booking của họ, LabManager thấy lab mình quản lý, Admin/Super được xem tất cả)*
+  - `GetBookingByIdAsync(id, requesterId, role)`
+  - `CreateBookingAsync(CreateBookingDTO, requesterId, role)` *(kiểm tra quyền lab, quota department, và zone thuộc lab)*
+  - `UpdateBookingAsync(id, UpdateBookingDTO, requesterId, role)` *(chặn thay đổi userId nếu không phải admin, kiểm tra lab/zone mới và quota)*
+  - `DeleteBookingAsync(id, requesterId, role)` *(chỉ Admin/SchoolManager mới thực thi được)*
+  - `GetAvailableSlotsAsync(AvailableSlotQueryDTO, requesterId, role)` *(chỉ trả slot khi user có quyền lab, zone hợp lệ và chưa vượt quota department)*
 
 ### 4. Repository Layer (LabManagement.DAL/)
 - **Interfaces/IBookingRepository.cs** - Interface cho booking repository
@@ -112,10 +111,13 @@ Xóa booking
 - `Notes` - Ghi chú (optional)
 
 ## Notes
-- Tất cả endpoints đều sử dụng JWT authentication
-- DELETE endpoint chỉ cho phép Admin và SchoolManager
-- Các endpoints khác cho phép mọi authenticated user
-- Khi lấy slot hoặc tạo booking, hệ thống kiểm tra lab thuộc department public hoặc department mà người dùng đã đăng ký (hoặc do họ quản lý). Member chỉ được tạo booking cho chính mình.
-- CreatedAt được tự động set khi tạo booking mới
-- Sử dụng ApiResponse wrapper cho tất cả responses
-- Exception handling được xử lý qua ExceptionMiddleware
+- Tất cả endpoints đều sử dụng JWT authentication; response được bọc trong `ApiResponse<>`
+- DELETE endpoint chỉ cho phép Admin và SchoolManager; **đọc/update** tự động lọc/kiểm tra quyền theo role
+- Member chỉ nhìn/giao dịch với booking của chính họ và không thể chỉnh `userId`
+- LabManager xem/điều chỉnh được booking thuộc lab mình quản lý
+- Khi lấy slot hoặc tạo/đổi booking, hệ thống kiểm tra:
+  1. Lab thuộc department public hoặc department mà người dùng đã đăng ký (hoặc do họ quản lý)
+  2. ZoneId nằm trong lab tương ứng
+  3. Thành viên chưa vượt quá `Constant.MaxDepartmentsPerMember` departments đang tham gia (kết hợp đăng ký + booking tương lai)
+- `CreatedAt` được tự động set khi tạo booking mới
+- Exception handling được xử lý qua `ExceptionMiddleware`
