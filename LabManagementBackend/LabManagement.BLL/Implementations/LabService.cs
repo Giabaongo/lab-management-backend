@@ -155,7 +155,8 @@ namespace LabManagement.BLL.Implementations
         private static bool IsElevatedRole(Constant.UserRole role)
         {
             return role == Constant.UserRole.Admin ||
-                   role == Constant.UserRole.SchoolManager;
+                   role == Constant.UserRole.SchoolManager ||
+                   role == Constant.UserRole.SecurityLab;
         }
 
         private static IQueryable<Lab> ApplyVisibilityFilter(IQueryable<Lab> query, int requesterId, Constant.UserRole requesterRole)
