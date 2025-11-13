@@ -187,18 +187,18 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> IsLabOpen(int id)
         {
-            var isOpen = await _labService.IsLabOpenAsync(id);
+            var isAvailable = await _labService.IsLabOpenAsync(id);
             return Ok(ApiResponse<object>.SuccessResponse(
-                new { labId = id, isOpen },
-                isOpen ? "Lab is open and accepting bookings" : "Lab is not available for bookings"
+                new { labId = id, isAvailable },
+                isAvailable ? "Lab is available for bookings" : "Lab is not available for bookings"
             ));
         }
 
         /// <summary>
-        /// Toggle lab open/close status
+        /// Toggle lab door open/close status (doesn't affect booking availability)
         /// </summary>
         /// <param name="id">Lab ID</param>
-        /// <param name="isOpen">New open status</param>
+        /// <param name="isOpen">New door status</param>
         /// <returns>Success result</returns>
         [HttpPatch("{id}/toggle-open")]
         [Authorize(Roles = $"{nameof(Constant.UserRole.LabManager)},{nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}")]
@@ -212,7 +212,7 @@ namespace LabManagement.API.Controllers
 
             return Ok(ApiResponse<object>.SuccessResponse(
                 new { labId = id, isOpen },
-                isOpen ? "Lab opened successfully" : "Lab closed successfully"
+                isOpen ? "Lab door opened successfully" : "Lab door closed successfully"
             ));
         }
 
