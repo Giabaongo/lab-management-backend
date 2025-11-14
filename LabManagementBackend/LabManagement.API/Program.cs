@@ -197,7 +197,7 @@ namespace LabManagement.API
             app.UseMiddleware<LabManagement.API.Middleware.ExceptionMiddleware>();
             
             // Enable CORS (MUST be before Authentication/Authorization)
-            app.UseCors("AllowAll");  // Use "ProductionPolicy" for production
+            app.UseCors(selectedCorsPolicy);  // Selected at startup based on FRONTEND_URL / environment
             
             // if (app.Environment.IsDevelopment())
             // {
