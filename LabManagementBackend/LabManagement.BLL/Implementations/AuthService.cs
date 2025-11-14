@@ -16,34 +16,53 @@ namespace LabManagement.BLL.Implementations
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IRedisHelper _redisHelper;
 
-        public AuthService(IConfiguration config, IUnitOfWork unitOfWork, IPasswordHasher passwordHasher)
+        private const int MaxLoginAttempts = 5;
+        private const int LockoutMinutes = 10;
+
+        public AuthService(IConfiguration config, IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, IRedisHelper redisHelper)
         {
             _config = config;
             _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
+            _redisHelper = redisHelper;
         }
 
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            // Validate input
+
             if (string.IsNullOrEmpty(loginDto.Email))
                 throw new BadRequestException("Email is required");
-            
+
             if (string.IsNullOrEmpty(loginDto.Password))
                 throw new BadRequestException("Password is required");
 
-            // Get user by email
+  
+            string loginAttemptKey = $"login_attempts:{loginDto.Email}";
+            var attempts = await _redisHelper.GetAsync(loginAttemptKey);
+            if (!string.IsNullOrEmpty(attempts) && int.Parse(attempts) >= MaxLoginAttempts)
+            {
+                throw new UnauthorizedException($"Too many failed login attempts. Account locked for {LockoutMinutes} minutes.");
+            }
+
+        
             var user = await _unitOfWork.Users.GetByEmailAsync(loginDto.Email);
-            
-            if (user == null)
-                throw new UnauthorizedException("Invalid email or password");
 
-            // Verify password using BCrypt
-            if (!_passwordHasher.VerifyPassword(loginDto.Password, user.PasswordHash))
-                throw new UnauthorizedException("Invalid email or password");
+ 
+            if (user == null || !_passwordHasher.VerifyPassword(loginDto.Password, user.PasswordHash))
+            {
+       
+                var currentAttempts = int.Parse(attempts ?? "0") + 1;
+                await _redisHelper.SetAsync(loginAttemptKey, currentAttempts.ToString(), TimeSpan.FromMinutes(LockoutMinutes));
 
-            // Create token with enhanced claims
+                throw new UnauthorizedException("Invalid email or password");
+            }
+
+    
+            await _redisHelper.DeleteAsync(loginAttemptKey);
+
+     
             var claims = new[]
             {
                 new Claim("UserId", user.UserId.ToString(CultureInfo.InvariantCulture)),

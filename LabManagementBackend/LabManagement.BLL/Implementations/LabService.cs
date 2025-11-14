@@ -10,7 +10,7 @@ using LabManagement.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -18,11 +18,13 @@ namespace LabManagement.BLL.Implementations
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IRedisHelper _redisHelper;
 
-        public LabService(IMapper mapper, IUnitOfWork unitOfWork)
+        public LabService(IMapper mapper, IUnitOfWork unitOfWork, IRedisHelper redisHelper)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _redisHelper = redisHelper;
         }
 
         public async Task<LabDTO> CreateLabAsync(CreateLabDTO createLabDTO)
@@ -37,7 +39,9 @@ namespace LabManagement.BLL.Implementations
             await _unitOfWork.Labs.AddAsync(lab);
             await _unitOfWork.SaveChangesAsync();
 
-            lab.Department = department;
+            // 1. INVALIDATE THE CACHE
+            await _redisHelper.DeleteAsync("AllLabs");
+
             return _mapper.Map<LabDTO>(lab);
         }
 
@@ -48,31 +52,84 @@ namespace LabManagement.BLL.Implementations
 
             await _unitOfWork.Labs.DeleteAsync(lab);
             await _unitOfWork.SaveChangesAsync();
+
+            // --- UPDATE HERE ---
+            // Invalidate both the list cache and the item cache
+            await _redisHelper.DeleteAsync("AllLabs");
+            await _redisHelper.DeleteAsync($"Lab:{id}"); // Use the ID passed into the method
+                                                         // --- END UPDATE ---
+
             return true;
         }
 
         public async Task<IEnumerable<LabDTO>> GetAllLabsAsync(int requesterId, Constant.UserRole requesterRole)
         {
-            var query = _unitOfWork.Labs
-                .GetLabsQueryable()
-                .Include(l => l.Department)
-                .AsNoTracking();
+            // 1. Define a unique key for this data in Redis
+            const string cacheKey = "AllLabs";
 
-            query = ApplyVisibilityFilter(query, requesterId, requesterRole);
+            // 2. Try to get the data from Redis first
+            string? cachedLabsJson = await _redisHelper.GetAsync(cacheKey);
 
-            var labs = await query.ToListAsync();
-            return _mapper.Map<IEnumerable<LabDTO>>(labs);
+            if (!string.IsNullOrEmpty(cachedLabsJson))
+            {
+                // 3. CACHE HIT (FAST PATH)
+                // Data was in Redis! Convert it from JSON and return it.
+                var cachedLabs = JsonSerializer.Deserialize<IEnumerable<LabDTO>>(cachedLabsJson);
+                return cachedLabs;
+            }
+
+            // 4. CACHE MISS (SLOW PATH)
+            // Data was not in Redis. Run your ORIGINAL code to get it from the database.
+            var labsFromDb = await _unitOfWork.Labs.GetAllAsync();
+            var labsDTO = _mapper.Map<IEnumerable<LabDTO>>(labsFromDb);
+
+            // 5. NOW, save this data to Redis for next time
+            string labsJsonToCache = JsonSerializer.Serialize(labsDTO);
+            await _redisHelper.SetAsync(cacheKey, labsJsonToCache, TimeSpan.FromMinutes(30)); // Cache for 30 mins
+
+            // 6. Return the data you got from the database
+            return labsDTO;
         }
 
         public async Task<LabDTO?> GetLabByIdAsync(int id)
         {
-            var lab = await _unitOfWork.Labs
+            // 1. Define a unique, dynamic key for this specific lab
+            string cacheKey = $"Lab:{id}";
+
+            // 2. Try to get the data from Redis first
+            string? cachedLabJson = await _redisHelper.GetAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedLabJson))
+            {
+                // 3. CACHE HIT (FAST PATH)
+                // Data was in Redis! Convert it from JSON and return it.
+                var cachedLab = JsonSerializer.Deserialize<LabDTO>(cachedLabJson);
+                return cachedLab;
+            }
+
+            // 4. CACHE MISS (SLOW PATH)
+            // Data was not in Redis. Run your ORIGINAL code.
+            var labFromDb = await _unitOfWork.Labs
                 .GetLabsQueryable()
                 .Include(l => l.Department)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(l => l.LabId == id);
 
-            return lab == null ? null : _mapper.Map<LabDTO>(lab);
+            if (labFromDb == null)
+            {
+                // Lab doesn't exist, so don't cache anything.
+                return null;
+            }
+
+            // Lab was found, so map it.
+            var labDTO = _mapper.Map<LabDTO>(labFromDb);
+
+            // 5. NOW, save this DTO to Redis for next time
+            string labJsonToCache = JsonSerializer.Serialize(labDTO);
+            await _redisHelper.SetAsync(cacheKey, labJsonToCache, TimeSpan.FromMinutes(30)); // Cache for 30 mins
+
+            // 6. Return the data you got from the database
+            return labDTO;
         }
 
         public async Task<PagedResult<LabDTO>> GetLabsAsync(QueryParameters queryParams, int requesterId, Constant.UserRole requesterRole)
@@ -147,6 +204,12 @@ namespace LabManagement.BLL.Implementations
             _mapper.Map(updateLabDTO, lab);
             await _unitOfWork.Labs.UpdateAsync(lab);
             await _unitOfWork.SaveChangesAsync();
+
+            // --- UPDATE HERE ---
+            // Invalidate both the list cache and the item cache
+            await _redisHelper.DeleteAsync("AllLabs");
+            await _redisHelper.DeleteAsync($"Lab:{lab.LabId}");
+            // --- END UPDATE ---
 
             lab.Department = department;
             return _mapper.Map<LabDTO>(lab);
