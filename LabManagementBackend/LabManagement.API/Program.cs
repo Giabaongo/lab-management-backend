@@ -111,6 +111,14 @@ namespace LabManagement.API
                           .AllowCredentials();          // Required for SignalR
                 });
                 
+                // Mobile app policy - Allow any origin for mobile apps
+                options.AddPolicy("AllowMobile", policy =>
+                {
+                    policy.AllowAnyOrigin()              // Mobile apps can come from any origin
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+                
                 // More restrictive policy for production (recommended)
                 options.AddPolicy("ProductionPolicy", policy =>
                 {
@@ -170,7 +178,9 @@ namespace LabManagement.API
             app.UseMiddleware<LabManagement.API.Middleware.ExceptionMiddleware>();
             
             // Enable CORS (MUST be before Authentication/Authorization)
-            app.UseCors("AllowAll");  // Use "ProductionPolicy" for production
+            // Use AllowMobile for mobile apps, AllowAll for web dev, ProductionPolicy for production
+            var corsPolicy = app.Environment.IsDevelopment() ? "AllowMobile" : "AllowMobile";
+            app.UseCors(corsPolicy);
             
             // if (app.Environment.IsDevelopment())
             // {

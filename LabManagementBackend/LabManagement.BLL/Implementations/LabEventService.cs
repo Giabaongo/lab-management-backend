@@ -3,10 +3,12 @@ using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Extensions;
 using LabManagement.Common.Models;
+using LabManagement.Common.Exceptions;
 using LabManagement.DAL.Interfaces;
 using LabManagement.DAL.Models;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace LabManagement.BLL.Implementations
 {
@@ -21,13 +23,50 @@ namespace LabManagement.BLL.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<LabEventDTO> CreateLabEventAsync(CreateLabEventDTO createLabEventDTO)
+        public async Task<LabEventCreationResultDTO> CreateLabEventAsync(CreateLabEventDTO createLabEventDTO)
         {
             var labEvent = _mapper.Map<LabEvent>(createLabEventDTO);
+            var cancelledBookings = new List<CancelledItemDTO>();
+            var cancelledEvents = new List<CancelledItemDTO>();
+
+            if (labEvent.IsHighPriority)
+            {
+                // If high priority event, auto-cancel conflicting bookings and low-priority events
+                var (bookings, events) = await CancelConflictingReservationsAsync(
+                    labEvent.LabId,
+                    labEvent.ZoneId,
+                    labEvent.StartTime,
+                    labEvent.EndTime,
+                    null); // null = new event, no eventId to exclude
+
+                cancelledBookings = bookings;
+                cancelledEvents = events;
+            }
+            else
+            {
+                // If normal priority event, check for conflicts with high priority events
+                var hasHighPriorityConflict = await HasHighPriorityEventConflictAsync(
+                    labEvent.LabId,
+                    labEvent.ZoneId,
+                    labEvent.StartTime,
+                    labEvent.EndTime,
+                    null);
+
+                if (hasHighPriorityConflict)
+                {
+                    throw new BadRequestException("Cannot create event: conflicts with a high priority event");
+                }
+            }
+
             await _unitOfWork.LabEvents.AddAsync(labEvent);
             await _unitOfWork.SaveChangesAsync();
 
-            return _mapper.Map<LabEventDTO>(labEvent);
+            return new LabEventCreationResultDTO
+            {
+                Event = _mapper.Map<LabEventDTO>(labEvent),
+                CancelledBookings = cancelledBookings,
+                CancelledEvents = cancelledEvents
+            };
         }
 
         public async Task<bool> DeleteLabEventAsync(int id)
@@ -103,16 +142,129 @@ namespace LabManagement.BLL.Implementations
             return await _unitOfWork.LabEvents.ExistsAsync(e => e.EventId == id);
         }
 
-        public async Task<LabEventDTO?> UpdateLabEventAsync(int id, UpdateLabEventDTO updateLabEventDTO)
+        public async Task<LabEventCreationResultDTO?> UpdateLabEventAsync(int id, UpdateLabEventDTO updateLabEventDTO)
         {
             var labEvent = await _unitOfWork.LabEvents.GetByIdAsync(id);
             if (labEvent == null) return null;
+
+            var startTime = updateLabEventDTO.StartTime ?? labEvent.StartTime;
+            var endTime = updateLabEventDTO.EndTime ?? labEvent.EndTime;
+            var labId = updateLabEventDTO.LabId ?? labEvent.LabId;
+            var zoneId = updateLabEventDTO.ZoneId ?? labEvent.ZoneId;
+            var willBeHighPriority = updateLabEventDTO.IsHighPriority ?? labEvent.IsHighPriority;
+
+            var cancelledBookings = new List<CancelledItemDTO>();
+            var cancelledEvents = new List<CancelledItemDTO>();
+
+            if (willBeHighPriority)
+            {
+                // If changing to (or staying as) high priority, cancel conflicting bookings and events
+                var (bookings, events) = await CancelConflictingReservationsAsync(labId, zoneId, startTime, endTime, id);
+                cancelledBookings = bookings;
+                cancelledEvents = events;
+            }
+            else
+            {
+                // If normal priority, check for conflicts with high priority events
+                var hasHighPriorityConflict = await HasHighPriorityEventConflictAsync(
+                    labId, zoneId, startTime, endTime, id);
+
+                if (hasHighPriorityConflict)
+                {
+                    throw new BadRequestException("Cannot update event: conflicts with a high priority event");
+                }
+            }
 
             _mapper.Map(updateLabEventDTO, labEvent);
             await _unitOfWork.LabEvents.UpdateAsync(labEvent);
             await _unitOfWork.SaveChangesAsync();
 
-            return _mapper.Map<LabEventDTO>(labEvent);
+            return new LabEventCreationResultDTO
+            {
+                Event = _mapper.Map<LabEventDTO>(labEvent),
+                CancelledBookings = cancelledBookings,
+                CancelledEvents = cancelledEvents
+            };
+        }
+
+        private async Task<(List<CancelledItemDTO> bookings, List<CancelledItemDTO> events)> CancelConflictingReservationsAsync(
+            int labId, int zoneId, DateTime startTime, DateTime endTime, int? currentEventId)
+        {
+            var cancelledBookingDTOs = new List<CancelledItemDTO>();
+            var cancelledEventDTOs = new List<CancelledItemDTO>();
+
+            // 1. Cancel all conflicting bookings
+            var conflictingBookings = await _unitOfWork.Bookings
+                .GetBookingsQueryable()
+                .Where(b => b.LabId == labId &&
+                           b.ZoneId == zoneId &&
+                           b.StartTime < endTime &&
+                           b.EndTime > startTime &&
+                           b.Status == 1) // 1 = Confirmed
+                .ToListAsync();
+
+            foreach (var booking in conflictingBookings)
+            {
+                booking.Status = 2; // 2 = Cancelled
+                await _unitOfWork.Bookings.UpdateAsync(booking);
+
+                cancelledBookingDTOs.Add(new CancelledItemDTO
+                {
+                    Id = booking.BookingId,
+                    Title = $"Booking #{booking.BookingId}",
+                    StartTime = booking.StartTime,
+                    EndTime = booking.EndTime,
+                    Notes = booking.Notes
+                });
+            }
+
+            // 2. Cancel all conflicting low-priority events
+            var conflictingEvents = await _unitOfWork.LabEvents
+                .GetLabEventsQueryable()
+                .Where(e => e.LabId == labId &&
+                           e.ZoneId == zoneId &&
+                           !e.IsHighPriority && // Only cancel low-priority events
+                           e.StartTime < endTime &&
+                           e.EndTime > startTime &&
+                           e.Status == 1 && // 1 = Confirmed/Active
+                           (currentEventId == null || e.EventId != currentEventId)) // Exclude current event when updating
+                .ToListAsync();
+
+            foreach (var labEvent in conflictingEvents)
+            {
+                labEvent.Status = 2; // 2 = Cancelled
+                await _unitOfWork.LabEvents.UpdateAsync(labEvent);
+
+                cancelledEventDTOs.Add(new CancelledItemDTO
+                {
+                    Id = labEvent.EventId,
+                    Title = labEvent.Title,
+                    StartTime = labEvent.StartTime,
+                    EndTime = labEvent.EndTime,
+                    Notes = labEvent.Description
+                });
+            }
+
+            // Save all changes if any conflicts found
+            if (conflictingBookings.Any() || conflictingEvents.Any())
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            return (cancelledBookingDTOs, cancelledEventDTOs);
+        }
+
+        private async Task<bool> HasHighPriorityEventConflictAsync(int labId, int zoneId, DateTime startTime, DateTime endTime, int? currentEventId)
+        {
+            return await _unitOfWork.LabEvents
+                .GetLabEventsQueryable()
+                .AnyAsync(e => e.LabId == labId &&
+                              e.ZoneId == zoneId &&
+                              e.IsHighPriority &&
+                              e.StartTime < endTime &&
+                              e.EndTime > startTime &&
+                              e.Status == 1 && // 1 = Active/Confirmed
+                              (currentEventId == null || e.EventId != currentEventId));
         }
     }
 }
