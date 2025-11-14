@@ -30,7 +30,7 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <returns>List of labs</returns>
         [HttpGet]
-        //[Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.Admin)}, {nameof(Constant.UserRole.SecurityLab)},{nameof(Constant.UserRole.Member)},{nameof(Constant.UserRole.LabManager)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<LabDTO>>>> GetAllLabs()
         {
             var labs = await _labService.GetAllLabsAsync();
