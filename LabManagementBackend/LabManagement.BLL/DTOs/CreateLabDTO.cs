@@ -19,11 +19,19 @@ namespace LabManagement.BLL.DTOs
         public int managerId { get; set; }
 
         [Required]
+        public int departmentId { get; set; }
+
+        [Required]
         [StringLength(100)]
         public string description { get; set; } = null!;
 
         [Required]
         [StringLength(100)]
         public string location { get; set; } = null!;
+
+        // Default to closed (door status) but active (can accept bookings)
+        public bool isOpen { get; set; } = false;
+        
+        public int status { get; set; } = 1; // 1 = Active
     }
 }

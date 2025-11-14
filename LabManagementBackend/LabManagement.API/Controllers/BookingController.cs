@@ -1,3 +1,5 @@
+using System;
+using LabManagement.API.Hubs;
 using LabManagement.BLL.DTOs;
 using LabManagement.BLL.Interfaces;
 using LabManagement.Common.Constants;
@@ -5,6 +7,8 @@ using LabManagement.Common.Exceptions;
 using LabManagement.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace LabManagement.API.Controllers
 {
@@ -16,10 +20,40 @@ namespace LabManagement.API.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly ILabService _labService;
+        private readonly IHubContext<BookingHub> _bookingHubContext;
 
-        public BookingController(IBookingService bookingService)
+        public BookingController(
+            IBookingService bookingService,
+            ILabService labService,
+            IHubContext<BookingHub> bookingHubContext)
         {
             _bookingService = bookingService;
+            _labService = labService;
+            _bookingHubContext = bookingHubContext;
+        }
+
+        private (int userId, Constant.UserRole role) GetRequesterContext()
+        {
+            var userIdClaim = User.FindFirst("UserId") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirst(ClaimTypes.Role) ?? User.FindFirst("Role");
+
+            if (userIdClaim == null || roleClaim == null)
+            {
+                throw new UnauthorizedException("Missing authentication context");
+            }
+
+            if (!int.TryParse(userIdClaim.Value, out var userId))
+            {
+                throw new UnauthorizedException("Invalid user identifier");
+            }
+
+            if (!Enum.TryParse(roleClaim.Value, out Constant.UserRole role))
+            {
+                throw new UnauthorizedException("Invalid user role");
+            }
+
+            return (userId, role);
         }
 
         /// <summary>
@@ -30,7 +64,8 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<IEnumerable<BookingDTO>>>> GetAllBookings()
         {
-            var bookings = await _bookingService.GetAllBookingsAsync();
+            var (userId, role) = GetRequesterContext();
+            var bookings = await _bookingService.GetAllBookingsAsync(userId, role);
             return Ok(ApiResponse<IEnumerable<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
         }
 
@@ -41,7 +76,8 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<PagedResult<BookingDTO>>>> GetBookingsPaged([FromQuery] QueryParameters queryParams)
         {
-            var bookings = await _bookingService.GetBookingsAsync(queryParams);
+            var (userId, role) = GetRequesterContext();
+            var bookings = await _bookingService.GetBookingsAsync(queryParams, userId, role);
             return Ok(ApiResponse<PagedResult<BookingDTO>>.SuccessResponse(bookings, "Bookings retrieved successfully"));
         }
 
@@ -55,7 +91,8 @@ namespace LabManagement.API.Controllers
             if (!ModelState.IsValid)
                 throw new BadRequestException("Invalid slot query parameters");
 
-            var slots = await _bookingService.GetAvailableSlotsAsync(query);
+            var (userId, role) = GetRequesterContext();
+            var slots = await _bookingService.GetAvailableSlotsAsync(query, userId, role);
             return Ok(ApiResponse<IEnumerable<AvailableSlotDTO>>.SuccessResponse(slots, "Available slots retrieved successfully"));
         }
 
@@ -68,7 +105,8 @@ namespace LabManagement.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<BookingDTO>>> GetBookingById(int id)
         {
-            var booking = await _bookingService.GetBookingByIdAsync(id);
+            var (userId, role) = GetRequesterContext();
+            var booking = await _bookingService.GetBookingByIdAsync(id, userId, role);
             if (booking == null)
             {
                 throw new NotFoundException("Booking", id);
@@ -89,12 +127,50 @@ namespace LabManagement.API.Controllers
             if (!ModelState.IsValid) 
                 throw new BadRequestException("Invalid booking data");
 
-            var booking = await _bookingService.CreateBookingAsync(createBookingDTO);
+            var (userId, role) = GetRequesterContext();
+
+            // Always use authenticated user's ID for Member role
+            // Admin/Manager can create booking for other users by passing userId in body
+            if (role == Constant.UserRole.Member)
+            {
+                createBookingDTO.UserId = userId;
+            }
+            else if (createBookingDTO.UserId == 0)
+            {
+                // If no userId specified in body, use authenticated user
+                createBookingDTO.UserId = userId;
+            }
+
+            var booking = await _bookingService.CreateBookingAsync(createBookingDTO, userId, role);
+            await NotifyManagerAboutBookingAsync(booking);
+
             return CreatedAtAction(
                 nameof(GetBookingById),
                 new { id = booking.BookingId },
                 ApiResponse<BookingDTO>.SuccessResponse(booking, "Booking created successfully")
             );
+        }
+
+        private async Task NotifyManagerAboutBookingAsync(BookingDTO booking)
+        {
+            var lab = await _labService.GetLabByIdAsync(booking.LabId);
+            if (lab == null)
+            {
+                return;
+            }
+
+            var groupName = BookingHub.GetManagerGroupName(lab.managerId);
+            await _bookingHubContext.Clients.Group(groupName)
+                .SendAsync("BookingCreated", new
+                {
+                    bookingId = booking.BookingId,
+                    labId = booking.LabId,
+                    labName = lab.labName,
+                    zoneId = booking.ZoneId,
+                    startTime = booking.StartTime,
+                    endTime = booking.EndTime,
+                    requestedByUserId = booking.UserId
+                });
         }
 
         /// <summary>
@@ -110,11 +186,8 @@ namespace LabManagement.API.Controllers
             if (!ModelState.IsValid)
                 throw new BadRequestException("Invalid booking data");
 
-            // Check if booking exists
-            if (!await _bookingService.BookingExistsAsync(id))
-                throw new NotFoundException("Booking", id);
-
-            var booking = await _bookingService.UpdateBookingAsync(id, updateBookingDTO);
+            var (userId, role) = GetRequesterContext();
+            var booking = await _bookingService.UpdateBookingAsync(id, updateBookingDTO, userId, role);
             if (booking == null)
                 throw new NotFoundException("Booking", id);
 
@@ -130,7 +203,8 @@ namespace LabManagement.API.Controllers
         [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)}")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteBooking(int id)
         {
-            var result = await _bookingService.DeleteBookingAsync(id);
+            var (userId, role) = GetRequesterContext();
+            var result = await _bookingService.DeleteBookingAsync(id, userId, role);
             if (!result)
                 throw new NotFoundException("Booking", id);
 

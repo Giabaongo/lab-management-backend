@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LabManagement.DAL.Models;
 
-public partial class EventParticipant
+public partial class EventParticipants
 {
     public int EventId { get; set; }
 
