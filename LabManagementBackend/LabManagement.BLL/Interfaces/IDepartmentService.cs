@@ -16,5 +16,12 @@ namespace LabManagement.BLL.Interfaces
         Task RegisterUserToDepartmentAsync(int userId, int departmentId, Constant.UserRole role);
         Task UnregisterUserFromDepartmentAsync(int userId, int departmentId);
         Task<bool> DepartmentExistsAsync(int id);
+        
+        // New methods for registration approval
+        Task<IEnumerable<DepartmentRegistrationDTO>> GetPendingRegistrationsAsync(int departmentId, int requesterId, Constant.UserRole requesterRole);
+        Task<bool> ApproveOrRejectRegistrationAsync(int departmentId, int targetUserId, bool approve, int requesterId, Constant.UserRole requesterRole);
+        
+        // Get only non-public departments that user can register to
+        Task<IEnumerable<DepartmentDTO>> GetRegisterableDepartmentsAsync(int userId);
     }
 }

@@ -423,6 +423,9 @@ public partial class LabManagementDbContext : DbContext
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysdatetime())")
                 .HasColumnName("created_at");
+            entity.Property(e => e.Status)
+                .HasDefaultValue(0) // 0 = Pending
+                .HasColumnName("status");
 
             entity.HasOne(d => d.Department).WithMany(p => p.UserDepartments)
                 .HasForeignKey(d => d.DepartmentId)
