@@ -35,8 +35,30 @@ namespace LabManagement.API
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(connString));
 
+            // Configure Upstash Redis Connection
+            // Option 1: Direct configuration (hardcoded)
+            var upstashRedisConnectionString = "crack-oryx-18581.upstash.io:6379,password=AUiVAAIncDI0MDkzMTA1YTcyOGU0OGQwOWVjZTE3YTk1MDZmMGZmNHAyMTg1ODE,ssl=True,abortConnect=False";
+            
+            // Option 2: Use environment variable (recommended for production)
+            // var upstashRedisConnectionString = Environment.GetEnvironmentVariable("UPSTASH_REDIS_CONNECTION") 
+            //     ?? "crack-oryx-18581.upstash.io:6379,password=AUiVAAIncDI0MDkzMTA1YTcyOGU0OGQwOWVjZTE3YTk1MDZmMGZmNHAyMTg1ODE,ssl=True,abortConnect=False";
+            
+            Console.WriteLine($"🔍 Redis Connection String Preview: {upstashRedisConnectionString.Substring(0, Math.Min(50, upstashRedisConnectionString.Length))}...");
+            
             builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-                    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("UptashRedis")));
+            {
+                try
+                {
+                    var connection = ConnectionMultiplexer.Connect(upstashRedisConnectionString);
+                    Console.WriteLine("✅ Redis Connection Established Successfully");
+                    return connection;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Redis Connection Failed: {ex.Message}");
+                    throw new InvalidOperationException($"Failed to connect to Upstash Redis: {ex.Message}", ex);
+                }
+            });
 
             // Add unit of work / repositories
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -199,8 +221,8 @@ namespace LabManagement.API
 
             app.UseHttpsRedirection();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            //app.UseAuthentication();
+            //app.UseAuthorization();
 
 
             app.MapControllers();
