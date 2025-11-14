@@ -18,8 +18,8 @@ namespace LabManagement.BLL.Interfaces
         Task<bool> DepartmentExistsAsync(int id);
         
         // New methods for registration approval
-        Task<IEnumerable<DepartmentRegistrationDTO>> GetPendingRegistrationsAsync(int departmentId, int requesterId, Constant.UserRole requesterRole);
-        Task<bool> ApproveOrRejectRegistrationAsync(int departmentId, int targetUserId, bool approve, int requesterId, Constant.UserRole requesterRole);
+        Task<IEnumerable<DepartmentRegistrationDTO>> GetPendingRegistrationsAsync(int departmentId);
+        Task<bool> ApproveOrRejectRegistrationAsync(int departmentId, int userId, bool approve);
         
         // Get only non-public departments that user can register to
         Task<IEnumerable<DepartmentDTO>> GetRegisterableDepartmentsAsync(int userId);

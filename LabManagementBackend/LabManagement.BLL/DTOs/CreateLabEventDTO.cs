@@ -31,6 +31,9 @@ namespace LabManagement.BLL.DTOs
 
         [Required(ErrorMessage = "Status is required")]
         public int Status { get; set; }
+
+        // Default to false if not provided by frontend
+        public bool IsHighPriority { get; set; } = false;
     }
 
     public class UpdateLabEventDTO
@@ -54,5 +57,8 @@ namespace LabManagement.BLL.DTOs
         public DateTime? EndTime { get; set; }
 
         public int? Status { get; set; }
+
+        // Nullable to allow frontend to omit this field
+        public bool? IsHighPriority { get; set; }
     }
 }

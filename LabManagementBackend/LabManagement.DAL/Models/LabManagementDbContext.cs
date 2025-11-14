@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,21 @@ public partial class LabManagementDbContext : DbContext
         : base(options)
     {
     }
+
+    public static string GetConnectionString(string connectionStringName)
+    {
+        var config = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .Build();
+        string connectionString = config.GetConnectionString(connectionStringName);
+        return connectionString;
+    }
+
+    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //    => optionsBuilder.UseSqlServer(GetConnectionString("DefaultConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer(GetConnectionString("DefaultConnection"));
 
     public virtual DbSet<ActivityType> ActivityTypes { get; set; }
 
@@ -191,6 +208,9 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.OrganizerId).HasColumnName("organizer_id");
+            entity.Property(e => e.IsHighPriority)
+                .HasDefaultValue(false)
+                .HasColumnName("is_high_priority");
             entity.Property(e => e.RowVersion)
                 .IsRowVersion()
                 .IsConcurrencyToken()

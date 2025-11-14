@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 
 namespace LabManagement.API
 {
@@ -33,11 +34,15 @@ namespace LabManagement.API
             // Add DbContext
             builder.Services.AddDbContext<LabManagementDbContext>(options =>
                 options.UseSqlServer(connString));
-            
+
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+                    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("UptashRedis")));
+
             // Add unit of work / repositories
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Add services
+            builder.Services.AddScoped<IRedisHelper, RedisHelper>();
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
@@ -111,6 +116,14 @@ namespace LabManagement.API
                           .AllowCredentials();          // Required for SignalR
                 });
                 
+                // Mobile app policy - Allow any origin for mobile apps
+                options.AddPolicy("AllowMobile", policy =>
+                {
+                    policy.AllowAnyOrigin()              // Mobile apps can come from any origin
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+                
                 // More restrictive policy for production (recommended)
                 options.AddPolicy("ProductionPolicy", policy =>
                 {
@@ -170,7 +183,9 @@ namespace LabManagement.API
             app.UseMiddleware<LabManagement.API.Middleware.ExceptionMiddleware>();
             
             // Enable CORS (MUST be before Authentication/Authorization)
-            app.UseCors("AllowAll");  // Use "ProductionPolicy" for production
+            // Use AllowMobile for mobile apps, AllowAll for web dev, ProductionPolicy for production
+            var corsPolicy = app.Environment.IsDevelopment() ? "AllowMobile" : "AllowMobile";
+            app.UseCors(corsPolicy);
             
             // if (app.Environment.IsDevelopment())
             // {
