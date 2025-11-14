@@ -110,20 +110,47 @@ namespace LabManagement.API
                           .AllowAnyHeader()
                           .AllowCredentials();          // Required for SignalR
                 });
-                
-                // More restrictive policy for production (recommended)
+
+                // Allow a configured frontend origin (set FRONTEND_URL env var or configuration)
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    // FRONTEND_URL may be comma or semicolon separated
+                    var frontend = builder.Configuration["FRONTEND_URL"];
+                    if (!string.IsNullOrEmpty(frontend))
+                    {
+                        var separators = new[] { ',', ';' };
+                        var origins = frontend.Split(separators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        policy.WithOrigins(origins)
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    }
+                    else
+                    {
+                        // Fallback to a safe production origin if env var missing
+                        policy.WithOrigins("https://lab-management-fe.vercel.app")
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    }
+                });
+
+                // More restrictive default policy for production (if no FRONTEND_URL supplied)
                 options.AddPolicy("ProductionPolicy", policy =>
                 {
                     policy.WithOrigins(
-                            "http://localhost:3000",      // React dev
-                            "http://localhost:5173",      // Vite dev
-                            "https://lab-management-fe.vercel.app"  // Production frontend (removed trailing slash)
+                            "https://lab-management-fe.vercel.app"
                           )
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();
                 });
             });
+
+            // Select default CORS policy name to use at runtime
+            var selectedCorsPolicy = builder.Environment.IsDevelopment()
+                ? "AllowAll"
+                : (!string.IsNullOrEmpty(builder.Configuration["FRONTEND_URL"]) ? "AllowFrontend" : "ProductionPolicy");
 
             //Bearer
             builder.Services.AddSwaggerGen(options =>
