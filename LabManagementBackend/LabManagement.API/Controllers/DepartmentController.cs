@@ -164,24 +164,23 @@ namespace LabManagement.API.Controllers
         }
 
         /// <summary>
-        /// Get pending registration requests for a department (Admin/SchoolManager/LabManager)
+        /// Get pending registration requests for a department (Admin/SchoolManager only)
         /// </summary>
         [HttpGet("{id}/pending-registrations")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.LabManager)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<DepartmentRegistrationDTO>>>> GetPendingRegistrations(int id)
         {
-            var (userId, role) = GetRequesterContext();
-            var registrations = await _departmentService.GetPendingRegistrationsAsync(id, userId, role);
+            var registrations = await _departmentService.GetPendingRegistrationsAsync(id);
             return Ok(ApiResponse<IEnumerable<DepartmentRegistrationDTO>>.SuccessResponse(
                 registrations, 
                 "Pending registrations retrieved successfully"));
         }
 
         /// <summary>
-        /// Approve or reject a department registration request (Admin/SchoolManager/LabManager)
+        /// Approve or reject a department registration request (Admin/SchoolManager only)
         /// </summary>
         [HttpPost("{id}/approve-registration")]
-        [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)},{nameof(Constant.UserRole.LabManager)}")]
+        [Authorize(Roles = $"{nameof(Constant.UserRole.Admin)},{nameof(Constant.UserRole.SchoolManager)}")]
         public async Task<ActionResult<ApiResponse<object>>> ApproveRegistration(int id, [FromBody] ApproveRegistrationDTO approveDto)
         {
             if (!ModelState.IsValid)
@@ -189,8 +188,7 @@ namespace LabManagement.API.Controllers
                 throw new BadRequestException("Invalid request data");
             }
 
-            var (userId, role) = GetRequesterContext();
-            await _departmentService.ApproveOrRejectRegistrationAsync(id, approveDto.UserId, approveDto.Approve, userId, role);
+            await _departmentService.ApproveOrRejectRegistrationAsync(id, approveDto.UserId, approveDto.Approve);
             
             var message = approveDto.Approve 
                 ? "Registration approved successfully" 

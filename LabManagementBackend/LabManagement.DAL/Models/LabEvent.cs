@@ -27,6 +27,8 @@ public partial class LabEvent
 
     public DateTime CreatedAt { get; set; }
 
+    public bool IsHighPriority { get; set; }
+
     public byte[] RowVersion { get; set; } = null!;
 
     public virtual ActivityType ActivityType { get; set; } = null!;

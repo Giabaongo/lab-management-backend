@@ -13,5 +13,6 @@ namespace LabManagement.BLL.DTOs
         public DateTime EndTime { get; set; }
         public int Status { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsHighPriority { get; set; }
     }
 }

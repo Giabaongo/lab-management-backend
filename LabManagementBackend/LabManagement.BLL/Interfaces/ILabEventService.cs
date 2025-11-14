@@ -8,8 +8,8 @@ namespace LabManagement.BLL.Interfaces
         Task<IEnumerable<LabEventDTO>> GetAllLabEventsAsync();
         Task<PagedResult<LabEventDTO>> GetLabEventsAsync(QueryParameters queryParams);
         Task<LabEventDTO?> GetLabEventByIdAsync(int id);
-        Task<LabEventDTO> CreateLabEventAsync(CreateLabEventDTO createLabEventDTO);
-        Task<LabEventDTO?> UpdateLabEventAsync(int id, UpdateLabEventDTO updateLabEventDTO);
+        Task<LabEventCreationResultDTO> CreateLabEventAsync(CreateLabEventDTO createLabEventDTO);
+        Task<LabEventCreationResultDTO?> UpdateLabEventAsync(int id, UpdateLabEventDTO updateLabEventDTO);
         Task<bool> DeleteLabEventAsync(int id);
         Task<bool> LabEventExistsAsync(int id);
     }

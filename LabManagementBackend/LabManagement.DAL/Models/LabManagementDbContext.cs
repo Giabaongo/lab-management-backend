@@ -208,6 +208,9 @@ public partial class LabManagementDbContext : DbContext
                 .HasColumnName("end_time");
             entity.Property(e => e.LabId).HasColumnName("lab_id");
             entity.Property(e => e.OrganizerId).HasColumnName("organizer_id");
+            entity.Property(e => e.IsHighPriority)
+                .HasDefaultValue(false)
+                .HasColumnName("is_high_priority");
             entity.Property(e => e.RowVersion)
                 .IsRowVersion()
                 .IsConcurrencyToken()

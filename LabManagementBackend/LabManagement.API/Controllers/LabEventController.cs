@@ -72,23 +72,31 @@ namespace LabManagement.API.Controllers
         /// Create a new lab event
         /// </summary>
         /// <param name="createLabEventDTO">Lab event creation data</param>
-        /// <returns>Created lab event</returns>
+        /// <returns>Created lab event with information about cancelled items</returns>
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<LabEventDTO>>> CreateLabEvent([FromBody] CreateLabEventDTO createLabEventDTO)
+        public async Task<ActionResult<ApiResponse<LabEventCreationResultDTO>>> CreateLabEvent([FromBody] CreateLabEventDTO createLabEventDTO)
         {
             if (!ModelState.IsValid)
                 throw new BadRequestException("Invalid lab event data");
 
-            var labEvent = await _labEventService.CreateLabEventAsync(createLabEventDTO);
+            var result = await _labEventService.CreateLabEventAsync(createLabEventDTO);
             
             // Notify subscribers about new event
-            await NotifyNewLabEventAsync(labEvent);
+            await NotifyNewLabEventAsync(result.Event);
+            
+            // Build message based on cancellations
+            var message = "Lab event created successfully";
+            if (result.TotalCancelled > 0)
+            {
+                message += $". {result.TotalCancelled} conflicting item(s) were automatically cancelled " +
+                          $"({result.CancelledBookings.Count} booking(s), {result.CancelledEvents.Count} event(s))";
+            }
             
             return CreatedAtAction(
                 nameof(GetLabEventById),
-                new { id = labEvent.EventId },
-                ApiResponse<LabEventDTO>.SuccessResponse(labEvent, "Lab event created successfully")
+                new { id = result.Event.EventId },
+                ApiResponse<LabEventCreationResultDTO>.SuccessResponse(result, message)
             );
         }
 
@@ -119,10 +127,10 @@ namespace LabManagement.API.Controllers
         /// </summary>
         /// <param name="id">Lab Event ID</param>
         /// <param name="updateLabEventDTO">Lab event update data</param>
-        /// <returns>Updated lab event</returns>
+        /// <returns>Updated lab event with information about cancelled items</returns>
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<LabEventDTO>>> UpdateLabEvent(int id, [FromBody] UpdateLabEventDTO updateLabEventDTO)
+        public async Task<ActionResult<ApiResponse<LabEventCreationResultDTO>>> UpdateLabEvent(int id, [FromBody] UpdateLabEventDTO updateLabEventDTO)
         {
             if (!ModelState.IsValid)
                 throw new BadRequestException("Invalid lab event data");
@@ -130,11 +138,19 @@ namespace LabManagement.API.Controllers
             if (!await _labEventService.LabEventExistsAsync(id))
                 throw new NotFoundException("Lab Event", id);
 
-            var labEvent = await _labEventService.UpdateLabEventAsync(id, updateLabEventDTO);
-            if (labEvent == null)
+            var result = await _labEventService.UpdateLabEventAsync(id, updateLabEventDTO);
+            if (result == null)
                 throw new NotFoundException("Lab Event", id);
 
-            return Ok(ApiResponse<LabEventDTO>.SuccessResponse(labEvent, "Lab event updated successfully"));
+            // Build message based on cancellations
+            var message = "Lab event updated successfully";
+            if (result.TotalCancelled > 0)
+            {
+                message += $". {result.TotalCancelled} conflicting item(s) were automatically cancelled " +
+                          $"({result.CancelledBookings.Count} booking(s), {result.CancelledEvents.Count} event(s))";
+            }
+
+            return Ok(ApiResponse<LabEventCreationResultDTO>.SuccessResponse(result, message));
         }
 
         /// <summary>
